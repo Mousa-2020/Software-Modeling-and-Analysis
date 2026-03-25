@@ -1,0 +1,2117 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>منصة تعلم بايثون | الجامعة التكنولوجية</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+/* ===================================================
+   المتغيرات العامة - نظام الألوان والخطوط
+=================================================== */
+:root {
+  --bg:        #070b14;
+  --bg2:       #0d1120;
+  --surface:   #111827;
+  --surface2:  #1a2236;
+  --border:    #1e2d45;
+  --accent:    #38bdf8;   /* أزرق سماوي */
+  --accent2:   #818cf8;   /* بنفسجي */
+  --green:     #4ade80;
+  --red:       #f87171;
+  --yellow:    #fbbf24;
+  --orange:    #fb923c;
+  --pink:      #f472b6;
+  --text:      #e2e8f0;
+  --muted:     #64748b;
+  --muted2:    #94a3b8;
+  --font:      'Tajawal', sans-serif;
+  --code-font: 'JetBrains Mono', monospace;
+  --r:         14px;
+  --r-sm:      8px;
+}
+
+/* ===================================================
+   إعادة تعيين أساسية
+=================================================== */
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:var(--font);
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* ===================================================
+   صفحة الترحيب (Splash Screen)
+=================================================== */
+#splash{
+  position:fixed;inset:0;
+  background:var(--bg);
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  z-index:9999;
+  gap:16px;
+  transition:opacity .5s ease, visibility .5s;
+}
+#splash.hide{opacity:0;visibility:hidden;}
+.splash-logo{font-size:64px;animation:bounce 1s infinite alternate;}
+.splash-title{font-size:24px;font-weight:900;color:var(--accent);}
+.splash-sub{font-size:13px;color:var(--muted2);}
+.splash-bar{width:200px;height:4px;background:var(--surface2);border-radius:2px;overflow:hidden;margin-top:8px;}
+.splash-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));animation:load 1.5s ease forwards;}
+@keyframes load{from{width:0}to{width:100%}}
+@keyframes bounce{from{transform:translateY(0)}to{transform:translateY(-10px)}}
+
+/* ===================================================
+   التخطيط الرئيسي
+=================================================== */
+#app{display:flex;flex-direction:column;min-height:100vh;}
+
+/* ===================================================
+   الشريط العلوي (Header)
+=================================================== */
+.header{
+  background:rgba(7,11,20,.95);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding:0 16px;
+  height:58px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:500;
+}
+.header-brand{display:flex;align-items:center;gap:10px;}
+.brand-icon{font-size:26px;}
+.brand-text h1{font-size:16px;font-weight:800;color:var(--accent);line-height:1.1;}
+.brand-text span{font-size:10px;color:var(--muted);display:block;}
+.header-score{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:6px 14px;
+  font-size:12px;
+  font-weight:700;
+  color:var(--yellow);
+  display:flex;align-items:center;gap:6px;
+}
+
+/* ===================================================
+   شريط التنقل السفلي (Bottom Nav)
+=================================================== */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;
+  background:rgba(13,17,32,.97);
+  border-top:1px solid var(--border);
+  display:flex;
+  z-index:500;
+  padding-bottom:env(safe-area-inset-bottom, 0);
+}
+.nav-item{
+  flex:1;
+  display:flex;flex-direction:column;align-items:center;
+  padding:8px 4px;
+  cursor:pointer;
+  border:none;background:transparent;color:var(--muted);
+  font-family:var(--font);
+  font-size:10px;gap:3px;
+  transition:color .2s;
+  position:relative;
+}
+.nav-item.active{color:var(--accent);}
+.nav-item .nav-icon{font-size:20px;}
+.nav-dot{
+  position:absolute;top:6px;right:calc(50% - 14px);
+  width:6px;height:6px;border-radius:50%;
+  background:var(--green);
+  display:none;
+}
+.nav-item.done .nav-dot{display:block;}
+
+/* ===================================================
+   المحتوى الرئيسي (Pages)
+=================================================== */
+.page{display:none;padding:16px 16px 90px;max-width:700px;margin:0 auto;width:100%;}
+.page.active{display:block;animation:fadeUp .3s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* ===================================================
+   صفحة الدروس - قائمة الدروس
+=================================================== */
+.lessons-grid{display:flex;flex-direction:column;gap:10px;}
+.lesson-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:16px;
+  cursor:pointer;
+  display:flex;align-items:center;gap:14px;
+  transition:all .2s;
+  text-decoration:none;color:inherit;
+}
+.lesson-card:hover,.lesson-card:active{
+  border-color:var(--accent);
+  background:var(--surface2);
+  transform:translateX(-3px);
+}
+.lesson-card.completed{border-color:rgba(74,222,128,.3);}
+.lesson-icon-wrap{
+  width:48px;height:48px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;flex-shrink:0;
+}
+.lesson-info{flex:1;}
+.lesson-num{font-size:11px;color:var(--muted);font-weight:600;}
+.lesson-name{font-size:15px;font-weight:800;margin:2px 0;}
+.lesson-name-en{font-size:11px;color:var(--muted2);}
+.lesson-badge{
+  font-size:10px;padding:3px 8px;border-radius:10px;
+  background:rgba(56,189,248,.12);color:var(--accent);border:1px solid rgba(56,189,248,.2);
+  font-weight:700;white-space:nowrap;
+}
+.lesson-badge.done{background:rgba(74,222,128,.12);color:var(--green);border-color:rgba(74,222,128,.2);}
+
+/* ===================================================
+   صفحة الدرس الداخلية
+=================================================== */
+.back-btn{
+  display:flex;align-items:center;gap:8px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;padding:8px 14px;
+  cursor:pointer;font-family:var(--font);color:var(--muted2);
+  font-size:13px;margin-bottom:16px;width:fit-content;
+  transition:all .2s;
+}
+.back-btn:hover{color:var(--accent);border-color:var(--accent);}
+
+.lesson-hero{
+  background:linear-gradient(135deg,var(--surface2),var(--surface));
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:20px;margin-bottom:16px;
+  position:relative;overflow:hidden;
+}
+.lesson-hero::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+}
+.lesson-hero-icon{font-size:36px;margin-bottom:8px;}
+.lesson-hero-badge{
+  display:inline-block;
+  background:rgba(56,189,248,.12);color:var(--accent);
+  border:1px solid rgba(56,189,248,.25);
+  padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700;
+  margin-bottom:8px;
+}
+.lesson-hero h2{font-size:22px;font-weight:900;margin-bottom:6px;}
+.lesson-hero h2 em{font-style:normal;color:var(--accent);}
+.lesson-hero p{font-size:13px;color:var(--muted2);line-height:1.7;}
+
+/* ===================================================
+   أجزاء الدرس (Tabs)
+=================================================== */
+.lesson-tabs{
+  display:flex;gap:6px;margin-bottom:16px;
+  overflow-x:auto;scrollbar-width:none;padding-bottom:2px;
+}
+.lesson-tabs::-webkit-scrollbar{display:none;}
+.tab-btn{
+  white-space:nowrap;padding:8px 14px;
+  border-radius:20px;border:1px solid var(--border);
+  background:transparent;color:var(--muted);
+  font-family:var(--font);font-size:12px;font-weight:700;
+  cursor:pointer;transition:all .2s;
+}
+.tab-btn.active{background:var(--accent);color:#000;border-color:var(--accent);}
+
+.tab-content{display:none;}
+.tab-content.active{display:block;animation:fadeUp .25s ease;}
+
+/* ===================================================
+   عناوين الأقسام
+=================================================== */
+.sec-title{
+  font-size:14px;font-weight:800;color:var(--accent2);
+  margin:20px 0 10px;display:flex;align-items:center;gap:8px;
+}
+.sec-title::after{
+  content:'';flex:1;height:1px;background:var(--border);
+}
+
+/* ===================================================
+   بطاقات المعلومات
+=================================================== */
+.info-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);padding:16px;margin-bottom:10px;
+}
+.steps{display:flex;flex-direction:column;gap:10px;}
+.step{display:flex;gap:12px;align-items:flex-start;}
+.step-n{
+  min-width:30px;height:30px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:900;color:#000;flex-shrink:0;
+}
+.step-t{font-size:13px;line-height:1.8;padding-top:4px;}
+.step-t strong{color:var(--accent);}
+.step-t code{
+  font-family:var(--code-font);font-size:12px;
+  background:rgba(56,189,248,.1);color:var(--accent);
+  padding:1px 5px;border-radius:4px;
+}
+
+/* ===================================================
+   صناديق الكود
+=================================================== */
+.code-box{
+  background:#060b14;border:1px solid var(--border);
+  border-radius:var(--r);margin-bottom:12px;overflow:hidden;
+}
+.code-top{
+  background:#0d1120;padding:8px 14px;
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--border);
+}
+.code-dots{display:flex;gap:5px;}
+.code-dots span{width:9px;height:9px;border-radius:50%;}
+.cd1{background:#ff5f57;}.cd2{background:#febc2e;}.cd3{background:#28c840;}
+.code-file{font-size:10px;color:var(--muted);font-family:var(--code-font);}
+.copy-btn{
+  background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.2);
+  color:var(--accent);padding:3px 9px;border-radius:5px;
+  font-size:10px;cursor:pointer;font-family:var(--font);font-weight:700;
+  transition:background .2s;
+}
+.copy-btn:hover{background:rgba(56,189,248,.25);}
+.code-body{padding:14px;overflow-x:auto;}
+.code-body pre{
+  font-family:var(--code-font);font-size:12.5px;
+  line-height:1.9;color:var(--text);
+  direction:ltr;text-align:left;white-space:pre;
+}
+
+/* ألوان تمييز بناء الجملة */
+.k{color:#80cbc4;}   /* keyword */
+.s{color:#a5d6a7;}   /* string */
+.n{color:#ffab91;}   /* number */
+.c{color:#546e7a;font-style:italic;} /* comment */
+.f{color:#82b1ff;}   /* function */
+.b{color:#ce93d8;}   /* bool/None */
+.v{color:#e2e8f0;}   /* variable */
+.op{color:#f48fb1;}  /* operator */
+.cls{color:#ffd54f;} /* class */
+
+/* ===================================================
+   بطاقات التلميح
+=================================================== */
+.tip{
+  border-radius:10px;padding:12px 14px;margin-bottom:10px;
+  font-size:13px;line-height:1.7;
+}
+.tip-info{background:rgba(56,189,248,.07);border:1px solid rgba(56,189,248,.2);color:var(--text);}
+.tip-warn{background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.2);color:var(--text);}
+.tip-success{background:rgba(74,222,128,.07);border:1px solid rgba(74,222,128,.2);color:var(--text);}
+.tip-title{font-weight:800;margin-bottom:4px;}
+.tip-info .tip-title{color:var(--accent);}
+.tip-warn .tip-title{color:var(--yellow);}
+.tip-success .tip-title{color:var(--green);}
+
+/* ===================================================
+   جدول أنواع البيانات
+=================================================== */
+.types-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.type-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;padding:12px;text-align:center;
+  transition:all .2s;
+}
+.type-card:hover{border-color:var(--accent);transform:translateY(-2px);}
+.type-em{font-size:22px;margin-bottom:4px;}
+.type-name{font-size:12px;font-weight:800;color:var(--accent);}
+.type-en{font-size:10px;color:var(--muted);margin:2px 0;}
+.type-ex{font-size:11px;color:var(--green);font-family:var(--code-font);}
+
+/* ===================================================
+   تحدي "اكتب الكود"
+=================================================== */
+.challenge-box{
+  background:linear-gradient(135deg,#0d1628,#0a1020);
+  border:1px solid rgba(129,140,248,.3);
+  border-radius:var(--r);padding:18px;margin-top:6px;
+}
+.challenge-title{font-size:16px;font-weight:800;color:var(--accent2);margin-bottom:4px;}
+.challenge-desc{font-size:13px;color:var(--muted2);line-height:1.7;margin-bottom:14px;}
+.challenge-task{
+  background:rgba(0,0,0,.3);border-radius:8px;
+  padding:12px;margin-bottom:12px;font-size:13px;line-height:1.8;
+  border-right:3px solid var(--accent2);
+}
+.challenge-task strong{color:var(--yellow);}
+
+/* منطقة كتابة الكود */
+.code-editor{
+  background:#04080f;border:1px solid var(--border);
+  border-radius:8px;overflow:hidden;margin-bottom:10px;
+}
+.editor-top{
+  background:#0a0f1a;padding:8px 12px;
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--border);
+}
+.editor-label{font-size:11px;color:var(--muted);font-family:var(--code-font);}
+.editor-hint{font-size:10px;color:var(--muted);font-style:italic;}
+textarea.code-input{
+  width:100%;min-height:120px;resize:vertical;
+  background:transparent;border:none;outline:none;
+  font-family:var(--code-font);font-size:12.5px;
+  color:var(--accent);line-height:1.8;
+  padding:12px 14px;direction:ltr;text-align:left;
+}
+
+/* منطقة الإخراج */
+.output-area{
+  border-radius:8px;padding:12px;
+  font-family:var(--code-font);font-size:12.5px;
+  line-height:1.8;direction:ltr;text-align:left;
+  min-height:50px;display:none;margin-bottom:10px;
+  white-space:pre-wrap;word-break:break-word;
+}
+.output-area.success{
+  background:rgba(74,222,128,.07);border:1px solid rgba(74,222,128,.25);
+  color:var(--green);display:block;
+}
+.output-area.error{
+  background:rgba(248,113,113,.07);border:1px solid rgba(248,113,113,.25);
+  color:var(--red);display:block;
+  font-family:var(--font);direction:rtl;text-align:right;font-size:13px;
+}
+
+/* أزرار */
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;}
+.btn{
+  flex:1;min-width:100px;
+  padding:11px 16px;border-radius:10px;border:none;
+  cursor:pointer;font-family:var(--font);font-size:13px;font-weight:700;
+  transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.btn-run{background:linear-gradient(135deg,var(--accent),#0ea5e9);color:#000;}
+.btn-run:hover{opacity:.9;transform:translateY(-1px);}
+.btn-hint{background:var(--surface);border:1px solid var(--border);color:var(--muted2);}
+.btn-hint:hover{border-color:var(--yellow);color:var(--yellow);}
+.btn-reset{background:var(--surface);border:1px solid var(--border);color:var(--muted2);}
+.btn-reset:hover{border-color:var(--red);color:var(--red);}
+
+/* رسالة التلميح */
+.hint-box{
+  background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.25);
+  border-radius:8px;padding:10px 12px;margin-bottom:10px;
+  font-size:12px;color:var(--yellow);line-height:1.7;display:none;
+}
+
+/* ===================================================
+   نظام نقاط التقدم
+=================================================== */
+.progress-ring{
+  display:flex;flex-direction:column;align-items:center;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);padding:20px;margin-bottom:16px;
+  text-align:center;
+}
+.ring-title{font-size:14px;font-weight:800;margin-bottom:16px;color:var(--accent2);}
+.ring-wrap{position:relative;width:100px;height:100px;margin:0 auto 12px;}
+.ring-wrap svg{transform:rotate(-90deg);}
+.ring-track{fill:none;stroke:var(--border);stroke-width:8;}
+.ring-fill{
+  fill:none;stroke-width:8;stroke-linecap:round;
+  stroke:var(--accent);
+  stroke-dasharray:251;
+  stroke-dashoffset:251;
+  transition:stroke-dashoffset .8s ease;
+}
+.ring-num{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-size:22px;font-weight:900;color:var(--accent);line-height:1;
+}
+.ring-num small{font-size:11px;color:var(--muted);font-weight:400;}
+.ring-label{font-size:12px;color:var(--muted2);}
+
+/* ===================================================
+   الامتحان الشامل (Final Exam)
+=================================================== */
+.exam-hero{
+  background:linear-gradient(135deg,#0f1628,#080c1a);
+  border:2px solid rgba(251,191,36,.3);
+  border-radius:var(--r);padding:24px;margin-bottom:20px;
+  text-align:center;position:relative;overflow:hidden;
+}
+.exam-hero::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at top,rgba(251,191,36,.05),transparent);
+}
+.exam-hero-icon{font-size:56px;margin-bottom:8px;}
+.exam-hero h2{font-size:22px;font-weight:900;color:var(--yellow);margin-bottom:6px;}
+.exam-hero p{font-size:13px;color:var(--muted2);line-height:1.7;}
+
+/* أسئلة الامتحان */
+.exam-q{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);padding:18px;margin-bottom:12px;
+}
+.exam-q-num{
+  font-size:10px;color:var(--accent);font-weight:700;
+  margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;
+}
+.exam-q-text{font-size:14px;font-weight:700;line-height:1.6;margin-bottom:4px;}
+.exam-q-code{
+  font-family:var(--code-font);font-size:12px;
+  background:rgba(0,0,0,.4);padding:8px 12px;border-radius:6px;
+  direction:ltr;text-align:left;margin:8px 0;color:var(--accent);
+  display:block;
+}
+.exam-opts{display:flex;flex-direction:column;gap:6px;margin-top:10px;}
+.exam-opt{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;background:var(--surface2);
+  border:1.5px solid var(--border);border-radius:8px;
+  cursor:pointer;font-size:13px;transition:all .2s;
+}
+.exam-opt:hover{border-color:var(--accent2);}
+.exam-opt.selected{border-color:var(--accent2);background:rgba(129,140,248,.1);}
+.exam-opt.correct{border-color:var(--green);background:rgba(74,222,128,.1);color:var(--green);}
+.exam-opt.wrong{border-color:var(--red);background:rgba(248,113,113,.1);color:var(--red);}
+.opt-letter{
+  min-width:26px;height:26px;border-radius:50%;
+  background:var(--border);display:flex;align-items:center;
+  justify-content:center;font-size:11px;font-weight:800;
+}
+
+/* نتيجة الامتحان */
+.exam-result{
+  background:var(--surface);border:2px solid var(--border);
+  border-radius:var(--r);padding:24px;text-align:center;
+  display:none;margin-top:16px;
+}
+.exam-result.show{display:block;animation:fadeUp .4s ease;}
+.result-emoji{font-size:64px;margin-bottom:12px;}
+.result-score{font-size:52px;font-weight:900;color:var(--accent);line-height:1;}
+.result-label{font-size:14px;color:var(--muted2);margin-bottom:16px;}
+.result-bar{height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin-bottom:20px;}
+.result-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:4px;transition:width 1s ease;}
+
+/* ===================================================
+   صفحة الملخص / الغش الورقة
+=================================================== */
+.cheat-section{margin-bottom:20px;}
+.cheat-header{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:10px;padding:12px 14px;
+  display:flex;align-items:center;justify-content:space-between;
+  cursor:pointer;
+}
+.cheat-header h3{font-size:14px;font-weight:800;}
+.cheat-arrow{transition:transform .3s;font-size:14px;color:var(--muted);}
+.cheat-section.open .cheat-arrow{transform:rotate(180deg);}
+.cheat-body{display:none;padding-top:10px;}
+.cheat-section.open .cheat-body{display:block;}
+
+/* جدول مرجع سريع */
+.ref-table{width:100%;border-collapse:collapse;font-size:12px;}
+.ref-table th{
+  background:var(--surface2);color:var(--accent);
+  padding:8px 10px;text-align:right;font-size:11px;
+  border-bottom:1px solid var(--border);
+}
+.ref-table td{
+  padding:8px 10px;border-bottom:1px solid rgba(30,45,69,.5);
+  vertical-align:top;
+}
+.ref-table tr:last-child td{border-bottom:none;}
+.ref-table td:last-child{
+  font-family:var(--code-font);font-size:11px;
+  color:var(--green);direction:ltr;text-align:left;
+}
+
+/* ===================================================
+   الـ Footer
+=================================================== */
+.footer{
+  text-align:center;padding:20px 16px;
+  font-size:12px;color:var(--muted);
+  border-top:1px solid var(--border);margin-top:10px;
+  line-height:1.8;
+}
+.footer strong{color:var(--accent2);}
+
+/* ===================================================
+   أنيميشن وعناصر مساعدة
+=================================================== */
+.badge-pill{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;
+}
+.pill-blue{background:rgba(56,189,248,.12);color:var(--accent);border:1px solid rgba(56,189,248,.2);}
+.pill-green{background:rgba(74,222,128,.12);color:var(--green);border:1px solid rgba(74,222,128,.2);}
+.pill-purple{background:rgba(129,140,248,.12);color:var(--accent2);border:1px solid rgba(129,140,248,.2);}
+
+/* صفحة الصفحة الرئيسية */
+.home-banner{
+  background:linear-gradient(135deg,#0d1628,#080c1a);
+  border:1px solid var(--border);border-radius:var(--r);
+  padding:24px 20px;margin-bottom:16px;position:relative;overflow:hidden;
+}
+.home-banner::before{
+  content:'🐍';
+  position:absolute;left:-10px;top:-10px;
+  font-size:100px;opacity:.05;
+  transform:rotate(-20deg);
+}
+.home-banner h2{font-size:20px;font-weight:900;margin-bottom:6px;}
+.home-banner h2 span{color:var(--accent);}
+.home-banner p{font-size:13px;color:var(--muted2);line-height:1.7;margin-bottom:14px;}
+.home-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.stat-card{
+  background:rgba(255,255,255,.03);border:1px solid var(--border);
+  border-radius:10px;padding:10px;text-align:center;
+}
+.stat-num{font-size:22px;font-weight:900;color:var(--accent);}
+.stat-label{font-size:10px;color:var(--muted);}
+
+.section-header{
+  font-size:13px;font-weight:800;color:var(--muted2);
+  margin:16px 0 10px;text-transform:uppercase;letter-spacing:1px;
+}
+
+/* ===================================================
+   Responsive - شاشات أكبر
+=================================================== */
+@media(min-width:640px){
+  .types-grid{grid-template-columns:repeat(4,1fr);}
+  .home-stats{gap:12px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ========== صفحة التحميل ========== -->
+<div id="splash">
+  <div class="splash-logo">🐍</div>
+  <div class="splash-title">منصة تعلم بايثون</div>
+  <div class="splash-sub">الجامعة التكنولوجية — كلية علوم الحاسوب</div>
+  <div class="splash-bar"><div class="splash-fill"></div></div>
+</div>
+
+<!-- ========== التطبيق الرئيسي ========== -->
+<div id="app">
+
+  <!-- الشريط العلوي -->
+  <header class="header">
+    <div class="header-brand">
+      <span class="brand-icon">🐍</span>
+      <div class="brand-text">
+        <h1>Python Lab</h1>
+        <span>الجامعة التكنولوجية</span>
+      </div>
+    </div>
+    <div class="header-score">⭐ <span id="totalScore">0</span> نقطة</div>
+  </header>
+
+  <!-- ===== صفحة الرئيسية ===== -->
+  <div class="page active" id="page-home">
+    <div class="home-banner">
+      <h2>أهلاً بك في<br><span>Python Lab 🐍</span></h2>
+      <p>منصتك الكاملة لمراجعة مادة نمذجة وتحليل البرمجيات — الجزء العملي. كل ما تحتاجه لاجتياز امتحانك في مكان واحد.</p>
+      <div class="home-stats">
+        <div class="stat-card">
+          <div class="stat-num">7</div>
+          <div class="stat-label">دروس</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="completedCount">0</div>
+          <div class="stat-label">مكتمل</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="homeScore">0</div>
+          <div class="stat-label">نقاط</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- مؤشر التقدم الدائري -->
+    <div class="progress-ring">
+      <div class="ring-title">📊 تقدمك في المادة</div>
+      <div class="ring-wrap">
+        <svg width="100" height="100">
+          <circle class="ring-track" cx="50" cy="50" r="40"/>
+          <circle class="ring-fill" id="ringFill" cx="50" cy="50" r="40"/>
+        </svg>
+        <div class="ring-num">
+          <span id="ringPct">0%</span>
+          <small>مكتمل</small>
+        </div>
+      </div>
+      <div class="ring-label">أكمل الدروس لرفع نسبة تقدمك</div>
+    </div>
+
+    <div class="section-header">🎯 ابدأ من هنا</div>
+    <!-- قائمة الدروس السريعة -->
+    <div class="lessons-grid" id="homeLessonList"></div>
+  </div>
+
+  <!-- ===== صفحة الدروس ===== -->
+  <div class="page" id="page-lessons">
+    <div id="lessonsListView">
+      <div style="font-size:18px;font-weight:900;margin-bottom:16px;">📚 جميع الدروس</div>
+      <div class="lessons-grid" id="allLessonsList"></div>
+    </div>
+
+    <!-- صفحة الدرس الداخلية -->
+    <div id="lessonDetailView" style="display:none;">
+      <button class="back-btn" onclick="backToList()">← العودة للدروس</button>
+      <div id="lessonContent"></div>
+    </div>
+  </div>
+
+  <!-- ===== صفحة الملخص ===== -->
+  <div class="page" id="page-summary">
+    <div style="font-size:18px;font-weight:900;margin-bottom:4px;">📋 ورقة الغش السريعة</div>
+    <div style="font-size:12px;color:var(--muted2);margin-bottom:16px;">مرجع سريع لجميع مفاهيم بايثون</div>
+    <div id="summaryContent"></div>
+  </div>
+
+  <!-- ===== صفحة الامتحان ===== -->
+  <div class="page" id="page-exam">
+    <div id="examContent"></div>
+  </div>
+
+  <!-- شريط التنقل السفلي -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" onclick="showPage('home',this)">
+      <div class="nav-dot"></div>
+      <span class="nav-icon">🏠</span>
+      <span>الرئيسية</span>
+    </button>
+    <button class="nav-item" onclick="showPage('lessons',this)">
+      <div class="nav-dot"></div>
+      <span class="nav-icon">📚</span>
+      <span>الدروس</span>
+    </button>
+    <button class="nav-item" onclick="showPage('summary',this)">
+      <div class="nav-dot"></div>
+      <span class="nav-icon">📋</span>
+      <span>الملخص</span>
+    </button>
+    <button class="nav-item" onclick="showPage('exam',this)">
+      <div class="nav-dot"></div>
+      <span class="nav-icon">📝</span>
+      <span>الامتحان</span>
+    </button>
+  </nav>
+
+</div><!-- /app -->
+
+
+<script>
+/* ================================================================
+   بيانات الدروس الكاملة
+================================================================ */
+const LESSONS = [
+  // ============================================================
+  // الدرس ١: المتغيرات وأنواع البيانات
+  // ============================================================
+  {
+    id:'variables',
+    icon:'🔢',
+    color:'linear-gradient(135deg,#1e3a5f,#0f1f3d)',
+    num:1, name:'المتغيرات وأنواع البيانات', nameEn:'Variables & Data Types',
+    weeks:'أسبوع ١',
+    desc:'تعلم كيف تخزن البيانات في ذاكرة الحاسوب باستخدام المتغيرات وأنواعها الأساسية.',
+    theory:`
+      <div class="steps">
+        <div class="step"><div class="step-n">١</div><div class="step-t">
+          <strong>المتغير</strong> هو "صندوق" في ذاكرة الحاسوب نحفظ فيه قيمة. نختار له اسماً ثم نضع فيه القيمة باستخدام علامة <code>=</code>
+        </div></div>
+        <div class="step"><div class="step-n">٢</div><div class="step-t">
+          بايثون يحدد <strong>نوع البيانات تلقائياً</strong> (Dynamic Typing). لا حاجة لتحديده يدوياً كما في C++ أو Java.
+        </div></div>
+        <div class="step"><div class="step-n">٣</div><div class="step-t">
+          الأنواع الأساسية: <code>int</code> (صحيح) — <code>float</code> (عشري) — <code>str</code> (نص) — <code>bool</code> (منطقي)
+        </div></div>
+        <div class="step"><div class="step-n">٤</div><div class="step-t">
+          أسماء المتغيرات: تبدأ بحرف أو _, لا تحتوي مسافات، استخدم _ للفصل مثل <code>student_name</code>، وهي حساسة لحالة الأحرف.
+        </div></div>
+        <div class="step"><div class="step-n">٥</div><div class="step-t">
+          دالة <code>type()</code> تخبرك بنوع المتغير، و<code>print()</code> لطباعة قيمته.
+        </div></div>
+      </div>
+      <br>
+      <div class="types-grid">
+        <div class="type-card"><div class="type-em">🔢</div><div class="type-name">int</div><div class="type-en">عدد صحيح</div><div class="type-ex">age = 20</div></div>
+        <div class="type-card"><div class="type-em">🌊</div><div class="type-name">float</div><div class="type-en">عدد عشري</div><div class="type-ex">gpa = 3.7</div></div>
+        <div class="type-card"><div class="type-em">💬</div><div class="type-name">str</div><div class="type-en">نص</div><div class="type-ex">name='Ali'</div></div>
+        <div class="type-card"><div class="type-em">✅</div><div class="type-name">bool</div><div class="type-en">منطقي</div><div class="type-ex">done=True</div></div>
+      </div>
+      <div class="tip tip-warn"><div class="tip-title">⚠️ تحذير</div>لا تسمي متغيراتك بكلمات بايثون المحجوزة مثل: <code>print, for, while, if, class</code></div>
+    `,
+    labExamples:[
+      {file:'variables.py', code:`<span class="c"># تعريف متغيرات من أنواع مختلفة</span>
+<span class="v">price</span>        <span class="op">=</span> <span class="n">10</span>
+<span class="v">rating</span>       <span class="op">=</span> <span class="n">4.9</span>
+<span class="v">course_name</span>  <span class="op">=</span> <span class="s">'Python for Beginners'</span>
+<span class="v">is_published</span> <span class="op">=</span> <span class="b">True</span>
+
+<span class="c"># طباعة نوع المتغير</span>
+<span class="f">print</span>(<span class="f">type</span>(<span class="v">price</span>))        <span class="c"># &lt;class 'int'&gt;</span>
+<span class="f">print</span>(<span class="f">type</span>(<span class="v">rating</span>))       <span class="c"># &lt;class 'float'&gt;</span>
+<span class="f">print</span>(<span class="f">type</span>(<span class="v">course_name</span>))  <span class="c"># &lt;class 'str'&gt;</span>
+<span class="f">print</span>(<span class="f">type</span>(<span class="v">is_published</span>)) <span class="c"># &lt;class 'bool'&gt;</span>`}
+    ],
+    extraExamples:[
+      {file:'input_example.py', title:'استقبال مدخلات من المستخدم', code:`<span class="c"># input() تعيد دائماً نصاً (str) - نحوّله للنوع المطلوب</span>
+<span class="v">birth_year</span> <span class="op">=</span> <span class="f">int</span>(<span class="f">input</span>(<span class="s">'أدخل سنة ميلادك: '</span>))
+<span class="v">name</span>       <span class="op">=</span> <span class="f">input</span>(<span class="s">'أدخل اسمك: '</span>)
+
+<span class="v">age</span> <span class="op">=</span> <span class="n">2025</span> <span class="op">-</span> <span class="v">birth_year</span>
+<span class="f">print</span>(<span class="s">f'أهلاً </span><span class="v">{name}</span><span class="s">، عمرك </span><span class="v">{age}</span><span class="s"> سنة'</span>)
+
+<span class="c"># تحويل الأنواع (Type Casting)</span>
+<span class="v">x</span> <span class="op">=</span> <span class="f">str</span>(<span class="n">42</span>)     <span class="c"># '42'</span>
+<span class="v">y</span> <span class="op">=</span> <span class="f">float</span>(<span class="s">'3.14'</span>) <span class="c"># 3.14</span>
+<span class="v">z</span> <span class="op">=</span> <span class="f">int</span>(<span class="n">9.9</span>)    <span class="c"># 9 (يقطع الكسر)</span>`}
+    ],
+    challenge:{
+      title:'🎯 تحدي المتغيرات',
+      desc:'اكتب كوداً يعرّف ٤ متغيرات تمثل معلومات طالب ثم يطبعها بشكل مرتب.',
+      task:`<strong>المطلوب:</strong> عرّف المتغيرات التالية وأعطها قيماً مناسبة:
+• <strong>student_name</strong> — اسمك (نص)
+• <strong>student_id</strong> — رقمك الجامعي (عدد صحيح)
+• <strong>gpa</strong> — معدلك (عدد عشري)
+• <strong>is_graduated</strong> — هل تخرجت؟ (True/False)
+ثم اطبع جميع المتغيرات مع أنواعها باستخدام type()`,
+      hint:'مثال: student_name = "أحمد"  ثم print(student_name, type(student_name))',
+      placeholder:`# عرّف المتغيرات هنا
+student_name = 
+student_id = 
+gpa = 
+is_graduated = 
+
+# اطبعها
+print(student_name)`,
+      validate: function(code, output) {
+        const checks = ['student_name','student_id','gpa','is_graduated'];
+        const missing = checks.filter(v => !code.includes(v));
+        if(missing.length > 0) return {ok:false, msg:`⚠️ لم تعرّف المتغير: ${missing[0]}`};
+        if(!code.includes('print')) return {ok:false, msg:'⚠️ لا يوجد أمر print لطباعة النتيجة'};
+        return {ok:true};
+      }
+    }
+  },
+
+  // ============================================================
+  // الدرس ٢: الجمل الشرطية والحلقات
+  // ============================================================
+  {
+    id:'control',
+    icon:'🔄',
+    color:'linear-gradient(135deg,#1e3d2f,#0f2018)',
+    num:2, name:'الجمل الشرطية والحلقات', nameEn:'If Statements & Loops',
+    weeks:'أسبوع ٢',
+    desc:'تعلم كيف تتحكم في تدفق البرنامج باستخدام if وحلقات for وwhile.',
+    theory:`
+      <div class="sec-title">🔀 الجمل الشرطية (if/elif/else)</div>
+      <div class="steps">
+        <div class="step"><div class="step-n">١</div><div class="step-t">
+          <code>if</code> تنفذ الكود فقط إذا كان الشرط <strong>صحيحاً (True)</strong>.
+        </div></div>
+        <div class="step"><div class="step-n">٢</div><div class="step-t">
+          <code>elif</code> تفحص شرطاً إضافياً إذا فشل الشرط السابق.
+        </div></div>
+        <div class="step"><div class="step-n">٣</div><div class="step-t">
+          <code>else</code> تنفذ إذا فشلت جميع الشروط السابقة.
+        </div></div>
+        <div class="step"><div class="step-n">٤</div><div class="step-t">
+          المعاملات المنطقية: <code>and</code> (كلاهما صحيح) — <code>or</code> (أحدهما) — <code>not</code> (عكس)
+        </div></div>
+      </div>
+      <br>
+      <div class="sec-title">🔁 حلقة while</div>
+      <div class="steps">
+        <div class="step"><div class="step-n">١</div><div class="step-t">
+          تكرر الكود <strong>طالما</strong> الشرط صحيح. انتبه: يجب أن ينتهي الشرط وإلا ستنتهي في حلقة لا نهائية!
+        </div></div>
+        <div class="step"><div class="step-n">٢</div><div class="step-t">
+          استخدم <code>break</code> للخروج من الحلقة و<code>continue</code> للانتقال للتكرار التالي.
+        </div></div>
+      </div>
+      <br>
+      <div class="sec-title">🔁 حلقة for</div>
+      <div class="steps">
+        <div class="step"><div class="step-n">١</div><div class="step-t">
+          تمر على عناصر متسلسلة (قائمة، نص، range).
+        </div></div>
+        <div class="step"><div class="step-n">٢</div><div class="step-t">
+          <code>range(5)</code> → 0,1,2,3,4 | <code>range(1,5)</code> → 1,2,3,4 | <code>range(1,10,2)</code> → 1,3,5,7,9
+        </div></div>
+      </div>
+      <div class="tip tip-info"><div class="tip-title">💡 مقارنة الحلقتين</div>
+      استخدم <code>for</code> عندما تعرف عدد التكرارات مسبقاً، و<code>while</code> عندما تعتمد على شرط.</div>
+    `,
+    labExamples:[
+      {file:'if_statement.py', code:`<span class="c"># جملة if بسيطة</span>
+<span class="v">is_hot</span> <span class="op">=</span> <span class="b">True</span>
+<span class="v">is_cold</span> <span class="op">=</span> <span class="b">False</span>
+
+<span class="k">if</span> <span class="v">is_hot</span>:
+    <span class="f">print</span>(<span class="s">"يوم حار"</span>)
+<span class="k">elif</span> <span class="v">is_cold</span>:
+    <span class="f">print</span>(<span class="s">"يوم بارد"</span>)
+<span class="k">else</span>:
+    <span class="f">print</span>(<span class="s">"يوم جميل"</span>)
+
+<span class="c"># المعاملات المنطقية</span>
+<span class="v">has_income</span> <span class="op">=</span> <span class="b">True</span>
+<span class="v">has_credit</span> <span class="op">=</span> <span class="b">True</span>
+<span class="k">if</span> <span class="v">has_income</span> <span class="k">and</span> <span class="v">has_credit</span>:
+    <span class="f">print</span>(<span class="s">"القرض مقبول"</span>)`},
+      {file:'loops.py', code:`<span class="c"># حلقة while</span>
+<span class="v">i</span> <span class="op">=</span> <span class="n">1</span>
+<span class="k">while</span> <span class="v">i</span> <span class="op"><</span> <span class="n">5</span>:
+    <span class="f">print</span>(<span class="v">i</span>)
+    <span class="v">i</span> <span class="op">+=</span> <span class="n">1</span>   <span class="c"># مهم جداً! وإلا حلقة لا نهائية</span>
+
+<span class="c"># حلقة for مع range</span>
+<span class="k">for</span> <span class="v">i</span> <span class="k">in</span> <span class="f">range</span>(<span class="n">1</span>, <span class="n">6</span>):
+    <span class="f">print</span>(<span class="v">i</span>)  <span class="c"># يطبع 1 2 3 4 5</span>`}
+    ],
+    extraExamples:[
+      {file:'grade_system.py', title:'نظام درجات كامل', code:`<span class="c"># نظام تقييم الدرجات</span>
+<span class="v">grade</span> <span class="op">=</span> <span class="n">85</span>
+
+<span class="k">if</span> <span class="v">grade</span> <span class="op">>=</span> <span class="n">90</span>:
+    <span class="f">print</span>(<span class="s">"تقدير: امتياز A"</span>)
+<span class="k">elif</span> <span class="v">grade</span> <span class="op">>=</span> <span class="n">80</span>:
+    <span class="f">print</span>(<span class="s">"تقدير: جيد جداً B"</span>)
+<span class="k">elif</span> <span class="v">grade</span> <span class="op">>=</span> <span class="n">70</span>:
+    <span class="f">print</span>(<span class="s">"تقدير: جيد C"</span>)
+<span class="k">elif</span> <span class="v">grade</span> <span class="op">>=</span> <span class="n">60</span>:
+    <span class="f">print</span>(<span class="s">"تقدير: مقبول D"</span>)
+<span class="k">else</span>:
+    <span class="f">print</span>(<span class="s">"تقدير: راسب F"</span>)
+
+<span class="c"># حلقة for لحساب المجموع</span>
+<span class="v">total</span> <span class="op">=</span> <span class="n">0</span>
+<span class="k">for</span> <span class="v">num</span> <span class="k">in</span> <span class="f">range</span>(<span class="n">1</span>, <span class="n">11</span>):
+    <span class="v">total</span> <span class="op">+=</span> <span class="v">num</span>
+<span class="f">print</span>(<span class="s">f"مجموع 1 إلى 10 = </span><span class="v">{total}</span><span class="s">"</span>)  <span class="c"># 55</span>`}
+    ],
+    challenge:{
+      title:'🎯 تحدي الحلقات',
+      desc:'اكتب برنامجاً يطبع جدول ضرب العدد 5 من 1 إلى 10.',
+      task:`<strong>المطلوب:</strong> استخدم حلقة for مع range() لطباعة جدول ضرب العدد 5.
+الناتج المتوقع يبدأ بـ:
+5 × 1 = 5
+5 × 2 = 10
+...حتى...
+5 × 10 = 50`,
+      hint:'استخدم: for i in range(1, 11):  ثم print(f"5 × {i} = {5*i}")',
+      placeholder:`# اطبع جدول ضرب 5
+for i in range(1, 11):
+    # أكمل هنا`,
+      validate: function(code, output) {
+        if(!code.includes('for')) return {ok:false, msg:'⚠️ يجب استخدام حلقة for'};
+        if(!code.includes('range')) return {ok:false, msg:'⚠️ استخدم range() لتحديد نطاق الأرقام'};
+        if(!code.includes('print')) return {ok:false, msg:'⚠️ لا يوجد أمر print'};
+        return {ok:true};
+      }
+    }
+  },
+
+  // ============================================================
+  // الدرس ٣: النصوص (Strings)
+  // ============================================================
+  {
+    id:'strings',
+    icon:'💬',
+    color:'linear-gradient(135deg,#3d2020,#1f0f0f)',
+    num:3, name:'التعامل مع النصوص', nameEn:'String Manipulation',
+    weeks:'أسبوع ٣',
+    desc:'تعلم كيف تتعامل مع النصوص: القطع، التنسيق، والدوال المدمجة.',
+    theory:`
+      <div class="steps">
+        <div class="step"><div class="step-n">١</div><div class="step-t">
+          النصوص تُعرَّف بعلامتَي اقتباس أحادية <code>'text'</code> أو مزدوجة <code>"text"</code> أو ثلاثية <code>"""text"""</code> للنصوص متعددة الأسطر.
+        </div></div>
+        <div class="step"><div class="step-n">٢</div><div class="step-t">
+          <strong>الوصول لحرف:</strong> <code>course[0]</code> → أول حرف، <code>course[-1]</code> → آخر حرف (من النهاية).
+        </div></div>
+        <div class="step"><div class="step-n">٣</div><div class="step-t">
+          <strong>قطع النص (Slicing):</strong> <code>course[1:5]</code> → من موضع 1 حتى 4 (لا يشمل 5).
+        </div></div>
+        <div class="step"><div class="step-n">٤</div><div class="step-t">
+          <strong>النصوص المنسقة f-string:</strong> <code>f"مرحباً {name}"</code> — الأسرع والأوضح.
+        </div></div>
+        <div class="step"><div class="step-n">٥</div><div class="step-t">
+          دوال مدمجة مهمة: <code>.upper()</code> — <code>.lower()</code> — <code>.find()</code> — <code>.replace()</code> — <code>.strip()</code> — <code>.split()</code>
+        </div></div>
+      </div>
+      <div class="tip tip-info"><div class="tip-title">📌 النصوص غير قابلة للتغيير</div>
+      الدوال مثل .upper() لا تغيّر النص الأصلي بل تُعيد نصاً جديداً. يجب تخزينه: <code>name = name.upper()</code></div>
+    `,
+    labExamples:[
+      {file:'strings.py', code:`<span class="v">course</span> <span class="op">=</span> <span class="s">'Python for Beginners'</span>
+
+<span class="c"># الوصول للأحرف</span>
+<span class="f">print</span>(<span class="v">course</span>[<span class="n">0</span>])   <span class="c"># P</span>
+<span class="f">print</span>(<span class="v">course</span>[<span class="op">-</span><span class="n">1</span>])  <span class="c"># s</span>
+
+<span class="c"># قطع النص</span>
+<span class="f">print</span>(<span class="v">course</span>[<span class="n">1</span>:<span class="n">5</span>])  <span class="c"># ytho</span>
+<span class="f">print</span>(<span class="v">course</span>[:<span class="n">6</span>])   <span class="c"># Python</span>
+
+<span class="c"># f-string</span>
+<span class="v">name</span> <span class="op">=</span> <span class="s">'Mosh'</span>
+<span class="v">msg</span> <span class="op">=</span> <span class="s">f'Hi, my name is </span><span class="v">{name}</span><span class="s">'</span>
+
+<span class="c"># دوال النصوص</span>
+<span class="f">print</span>(<span class="v">msg</span>.<span class="f">upper</span>())          <span class="c"># HI, MY NAME IS MOSH</span>
+<span class="f">print</span>(<span class="v">msg</span>.<span class="f">find</span>(<span class="s">'name'</span>))     <span class="c"># 8</span>
+<span class="f">print</span>(<span class="v">msg</span>.<span class="f">replace</span>(<span class="s">'Mosh'</span>,<span class="s">'Ali'</span>)) <span class="c"># Hi, my name is Ali</span>
+<span class="f">print</span>(<span class="s">'Python'</span> <span class="k">in</span> <span class="v">course</span>)   <span class="c"># True</span>`}
+    ],
+    extraExamples:[
+      {file:'string_ops.py', title:'عمليات النصوص المتقدمة', code:`<span class="c"># Split - تقسيم النص</span>
+<span class="v">sentence</span> <span class="op">=</span> <span class="s">"بايثون لغة رائعة"</span>
+<span class="v">words</span> <span class="op">=</span> <span class="v">sentence</span>.<span class="f">split</span>()
+<span class="f">print</span>(<span class="v">words</span>)  <span class="c"># ['بايثون', 'لغة', 'رائعة']</span>
+
+<span class="c"># Strip - إزالة المسافات</span>
+<span class="v">email</span> <span class="op">=</span> <span class="s">"  user@mail.com  "</span>
+<span class="f">print</span>(<span class="v">email</span>.<span class="f">strip</span>())  <span class="c"># user@mail.com</span>
+
+<span class="c"># len() - طول النص</span>
+<span class="f">print</span>(<span class="f">len</span>(<span class="s">"Python"</span>))  <span class="c"># 6</span>
+
+<span class="c"># تكرار النص</span>
+<span class="f">print</span>(<span class="s">"-"</span> <span class="op">*</span> <span class="n">20</span>)  <span class="c"># --------------------</span>
+
+<span class="c"># title() - أول حرف كبير لكل كلمة</span>
+<span class="f">print</span>(<span class="s">"hello world"</span>.<span class="f">title</span>())  <span class="c"># Hello World</span>`}
+    ],
+    challenge:{
+      title:'🎯 تحدي النصوص',
+      desc:'اكتب برنامجاً يحلل جملة ويستخرج معلومات عنها.',
+      task:`<strong>المطلوب:</strong> 
+• عرّف متغير <strong>sentence</strong> = "Python is a great programming language"
+• اطبع <strong>طول الجملة</strong>
+• اطبع <strong>الجملة بأحرف كبيرة</strong>
+• اطبع <strong>عدد مرات ظهور حرف 'a'</strong> في الجملة
+• اطبع هل تحتوي كلمة <strong>'great'</strong>؟`,
+      hint:'استخدم: len(), .upper(), .count("a"), "great" in sentence',
+      placeholder:`sentence = "Python is a great programming language"
+
+# اطبع الطول
+print("الطول:", )
+
+# اطبع بأحرف كبيرة  
+print("كبيرة:", )
+
+# عدد حرف a
+print("عدد a:", )
+
+# هل تحتوي great
+print("تحتوي great:", )`,
+      validate: function(code, output) {
+        if(!code.includes('sentence')) return {ok:false, msg:'⚠️ عرّف المتغير sentence أولاً'};
+        if(!code.includes('len')) return {ok:false, msg:'⚠️ استخدم len() لحساب الطول'};
+        if(!code.includes('upper')) return {ok:false, msg:'⚠️ استخدم .upper() للأحرف الكبيرة'};
+        return {ok:true};
+      }
+    }
+  },
+
+  // ============================================================
+  // الدرس ٤: القوائم والمجموعات
+  // ============================================================
+  {
+    id:'lists',
+    icon:'📋',
+    color:'linear-gradient(135deg,#2d1e3f,#160f20)',
+    num:4, name:'القوائم والصفوف والقواميس', nameEn:'Lists, Tuples & Dicts',
+    weeks:'أسبوع ٥ و ٦',
+    desc:'هياكل البيانات الأساسية لتخزين مجموعات من القيم.',
+    theory:`
+      <div class="sec-title">📋 القوائم (Lists)</div>
+      <div class="steps">
+        <div class="step"><div class="step-n">١</div><div class="step-t">
+          قائمة مرتبة وقابلة للتعديل. تعريفها: <code>numbers = [1, 2, 3]</code>
+        </div></div>
+        <div class="step"><div class="step-n">٢</div><div class="step-t">
+          الوصول: <code>numbers[0]</code> أول عنصر، <code>numbers[-1]</code> آخر عنصر.
+        </div></div>
+        <div class="step"><div class="step-n">٣</div><div class="step-t">
+          أهم الدوال: <code>.append()</code> إضافة للنهاية — <code>.insert(i,v)</code> إدراج — <code>.remove(v)</code> حذف — <code>.sort()</code> ترتيب — <code>.len()</code> العدد
+        </div></div>
+      </div>
+      <br>
+      <div class="sec-title">📌 الصفوف (Tuples)</div>
+      <div class="steps">
+        <div class="step"><div class="step-n">١</div><div class="step-t">
+          مثل القائمة لكن <strong>غير قابلة للتعديل</strong> بعد الإنشاء. تعريفها: <code>point = (1, 2)</code>
+        </div></div>
+        <div class="step"><div class="step-n">٢</div><div class="step-t">
+          Unpacking: <code>x, y = point</code> → يخزن 1 في x و 2 في y
+        </div></div>
+      </div>
+      <br>
+      <div class="sec-title">🗂️ القواميس (Dictionaries)</div>
+      <div class="steps">
+        <div class="step"><div class="step-n">١</div><div class="step-t">
+          تخزن بيانات كأزواج <strong>مفتاح: قيمة</strong>. <code>d = {"name": "Ali", "age": 20}</code>
+        </div></div>
+        <div class="step"><div class="step-n">٢</div><div class="step-t">
+          الوصول: <code>d["name"]</code> أو بشكل آمن <code>d.get("phone", "غير موجود")</code>
+        </div></div>
+        <div class="step"><div class="step-n">٣</div><div class="step-t">
+          المفاتيح يجب أن تكون <strong>فريدة</strong>. يمكن تحديث القيمة: <code>d["age"] = 21</code>
+        </div></div>
+      </div>
+    `,
+    labExamples:[
+      {file:'lists.py', code:`<span class="v">numbers</span> <span class="op">=</span> [<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>, <span class="n">5</span>]
+
+<span class="v">numbers</span>.<span class="f">append</span>(<span class="n">6</span>)      <span class="c"># [1,2,3,4,5,6]</span>
+<span class="v">numbers</span>.<span class="f">insert</span>(<span class="n">0</span>, <span class="n">0</span>)   <span class="c"># [0,1,2,3,4,5,6]</span>
+<span class="v">numbers</span>.<span class="f">remove</span>(<span class="n">3</span>)      <span class="c"># يحذف أول 3</span>
+<span class="v">numbers</span>.<span class="f">sort</span>()         <span class="c"># ترتيب تصاعدي</span>
+<span class="v">numbers</span>.<span class="f">reverse</span>()      <span class="c"># عكس الترتيب</span>
+<span class="f">print</span>(<span class="f">len</span>(<span class="v">numbers</span>))    <span class="c"># عدد العناصر</span>`},
+      {file:'dict.py', code:`<span class="v">customer</span> <span class="op">=</span> {
+    <span class="s">"name"</span>: <span class="s">"John Smith"</span>,
+    <span class="s">"age"</span>: <span class="n">30</span>,
+    <span class="s">"is_verified"</span>: <span class="b">True</span>
+}
+
+<span class="f">print</span>(<span class="v">customer</span>[<span class="s">"name"</span>])   <span class="c"># John Smith</span>
+<span class="c"># .get() آمن - لا يرمي خطأ</span>
+<span class="f">print</span>(<span class="v">customer</span>.<span class="f">get</span>(<span class="s">"phone"</span>, <span class="s">"N/A"</span>))
+
+<span class="v">customer</span>[<span class="s">"name"</span>] <span class="op">=</span> <span class="s">"Ali"</span>  <span class="c"># تحديث</span>`}
+    ],
+    extraExamples:[
+      {file:'list_advanced.py', title:'القوائم المتقدمة', code:`<span class="c"># المرور على القائمة بـ for</span>
+<span class="v">fruits</span> <span class="op">=</span> [<span class="s">"تفاح"</span>, <span class="s">"موز"</span>, <span class="s">"برتقال"</span>]
+<span class="k">for</span> <span class="v">fruit</span> <span class="k">in</span> <span class="v">fruits</span>:
+    <span class="f">print</span>(<span class="s">f"الفاكهة: </span><span class="v">{fruit}</span><span class="s">"</span>)
+
+<span class="c"># enumerate - الفهرس والقيمة معاً</span>
+<span class="k">for</span> <span class="v">i</span>, <span class="v">fruit</span> <span class="k">in</span> <span class="f">enumerate</span>(<span class="v">fruits</span>):
+    <span class="f">print</span>(<span class="s">f"</span><span class="v">{i}</span><span class="s">: </span><span class="v">{fruit}</span><span class="s">"</span>)
+
+<span class="c"># List Comprehension - إنشاء قائمة بسطر واحد</span>
+<span class="v">squares</span> <span class="op">=</span> [<span class="v">x</span><span class="op">**</span><span class="n">2</span> <span class="k">for</span> <span class="v">x</span> <span class="k">in</span> <span class="f">range</span>(<span class="n">1</span>, <span class="n">6</span>)]
+<span class="f">print</span>(<span class="v">squares</span>)  <span class="c"># [1, 4, 9, 16, 25]</span>
+
+<span class="c"># Tuple unpacking</span>
+<span class="v">coordinates</span> <span class="op">=</span> (<span class="n">10</span>, <span class="n">20</span>, <span class="n">30</span>)
+<span class="v">x</span>, <span class="v">y</span>, <span class="v">z</span> <span class="op">=</span> <span class="v">coordinates</span>
+<span class="f">print</span>(<span class="v">x</span>, <span class="v">y</span>, <span class="v">z</span>)  <span class="c"># 10 20 30</span>`}
+    ],
+    challenge:{
+      title:'🎯 تحدي القواميس',
+      desc:'أنشئ قاموساً يمثل سجل طالب واستخرج معلومات منه.',
+      task:`<strong>المطلوب:</strong>
+• أنشئ قاموساً <strong>student</strong> يحتوي: name, age, grades (قائمة من ٣ درجات), is_active
+• اطبع اسم الطالب
+• احسب واطبع <strong>متوسط الدرجات</strong>
+• اطبع هل الطالب نشط؟`,
+      hint:'المتوسط = sum(grades) / len(grades)  والوصول: student["grades"]',
+      placeholder:`student = {
+    "name": "أحمد",
+    "age": 20,
+    "grades": [85, 90, 78],
+    "is_active": True
+}
+
+# اطبع الاسم
+print("الاسم:", student["name"])
+
+# احسب المتوسط
+grades = student["grades"]
+average = 
+print("المتوسط:", average)
+
+# هل نشط؟
+print("نشط:", )`,
+      validate: function(code, output) {
+        if(!code.includes('student')) return {ok:false, msg:'⚠️ أنشئ القاموس student أولاً'};
+        if(!code.includes('grades')) return {ok:false, msg:'⚠️ يجب الوصول لقائمة grades'};
+        if(!code.includes('sum') && !code.includes('/')) return {ok:false, msg:'⚠️ احسب المتوسط باستخدام sum() أو بالجمع والقسمة'};
+        return {ok:true};
+      }
+    }
+  },
+
+  // ============================================================
+  // الدرس ٥: الدوال
+  // ============================================================
+  {
+    id:'functions',
+    icon:'⚙️',
+    color:'linear-gradient(135deg,#1e2d3f,#0f1720)',
+    num:5, name:'الدوال', nameEn:'Functions',
+    weeks:'أسبوع ٤',
+    desc:'تعلم كيف تنظم كودك في وحدات قابلة لإعادة الاستخدام.',
+    theory:`
+      <div class="steps">
+        <div class="step"><div class="step-n">١</div><div class="step-t">
+          الدالة كتلة كود لها اسم، تُعرَّف بـ <code>def</code>. تُستدعى بكتابة اسمها مع أقواس.
+        </div></div>
+        <div class="step"><div class="step-n">٢</div><div class="step-t">
+          <strong>المعاملات (Parameters)</strong>: القيم التي تستقبلها الدالة. <strong>الحجج (Arguments)</strong>: القيم الفعلية عند الاستدعاء.
+        </div></div>
+        <div class="step"><div class="step-n">٣</div><div class="step-t">
+          <strong>نوعا الحجج:</strong> موضعية (الترتيب مهم) — مسماة <code>calc(tax=0.1, price=100)</code> (الترتيب لا يهم).
+        </div></div>
+        <div class="step"><div class="step-n">٤</div><div class="step-t">
+          <code>return</code> لإرجاع قيمة. بدونها تُرجع <code>None</code> تلقائياً.
+        </div></div>
+        <div class="step"><div class="step-n">٥</div><div class="step-t">
+          <strong>قيمة افتراضية:</strong> <code>def greet(name="ضيف")</code> — تُستخدم إذا لم يُمرَّر حجة.
+        </div></div>
+      </div>
+      <div class="tip tip-success"><div class="tip-title">✅ لماذا نستخدم الدوال؟</div>
+      DRY: Don't Repeat Yourself — اكتب الكود مرة واحدة واستخدمه في أماكن متعددة. وتُسهّل إيجاد الأخطاء وإصلاحها.</div>
+    `,
+    labExamples:[
+      {file:'functions.py', code:`<span class="c"># دالة بسيطة</span>
+<span class="k">def</span> <span class="f">greet_user</span>(<span class="v">name</span>):
+    <span class="f">print</span>(<span class="s">f"Hi </span><span class="v">{name}</span><span class="s">"</span>)
+
+<span class="f">greet_user</span>(<span class="s">"John"</span>)
+
+<span class="c"># دالة بقيمة إرجاع</span>
+<span class="k">def</span> <span class="f">square</span>(<span class="v">number</span>):
+    <span class="k">return</span> <span class="v">number</span> <span class="op">*</span> <span class="v">number</span>
+
+<span class="v">result</span> <span class="op">=</span> <span class="f">square</span>(<span class="n">5</span>)
+<span class="f">print</span>(<span class="v">result</span>)  <span class="c"># 25</span>
+
+<span class="c"># حجج مسماة</span>
+<span class="k">def</span> <span class="f">calc_total</span>(<span class="v">order</span>, <span class="v">shipping</span>, <span class="v">tax</span>):
+    <span class="k">return</span> <span class="v">order</span> <span class="op">+</span> <span class="v">shipping</span> <span class="op">+</span> <span class="v">tax</span>
+
+<span class="f">calc_total</span>(<span class="v">order</span><span class="op">=</span><span class="n">50</span>, <span class="v">shipping</span><span class="op">=</span><span class="n">5</span>, <span class="v">tax</span><span class="op">=</span><span class="n">0.1</span>)`}
+    ],
+    extraExamples:[
+      {file:'advanced_func.py', title:'دوال متقدمة', code:`<span class="c"># قيم افتراضية للمعاملات</span>
+<span class="k">def</span> <span class="f">make_coffee</span>(<span class="v">size</span><span class="op">=</span><span class="s">"medium"</span>, <span class="v">sugar</span><span class="op">=</span><span class="n">1</span>, <span class="v">milk</span><span class="op">=</span><span class="b">True</span>):
+    <span class="f">print</span>(<span class="s">f"قهوة {size}، سكر {sugar}، حليب {milk}"</span>)
+
+<span class="f">make_coffee</span>()                  <span class="c"># medium, 1, True</span>
+<span class="f">make_coffee</span>(<span class="s">"large"</span>, <span class="n">2</span>)       <span class="c"># large, 2, True</span>
+<span class="f">make_coffee</span>(<span class="v">milk</span><span class="op">=</span><span class="b">False</span>)        <span class="c"># medium, 1, False</span>
+
+<span class="c"># دالة تُرجع قيماً متعددة</span>
+<span class="k">def</span> <span class="f">min_max</span>(<span class="v">numbers</span>):
+    <span class="k">return</span> <span class="f">min</span>(<span class="v">numbers</span>), <span class="f">max</span>(<span class="v">numbers</span>)
+
+<span class="v">lo</span>, <span class="v">hi</span> <span class="op">=</span> <span class="f">min_max</span>([<span class="n">3</span>,<span class="n">1</span>,<span class="n">9</span>,<span class="n">5</span>,<span class="n">2</span>])
+<span class="f">print</span>(<span class="v">lo</span>, <span class="v">hi</span>)  <span class="c"># 1 9</span>`}
+    ],
+    challenge:{
+      title:'🎯 تحدي الدوال',
+      desc:'اكتب دالة لحساب درجة الطالب وتقديره.',
+      task:`<strong>المطلوب:</strong> اكتب دالة <strong>get_grade(score)</strong> تستقبل درجة وتُرجع التقدير:
+• 90+ → "A امتياز"
+• 80-89 → "B جيد جداً"
+• 70-79 → "C جيد"
+• 60-69 → "D مقبول"
+• أقل → "F راسب"
+ثم جربها بأرقام مختلفة.`,
+      hint:'استخدم if/elif/else داخل الدالة، وتذكر return في كل حالة',
+      placeholder:`def get_grade(score):
+    if score >= 90:
+        return "A امتياز"
+    elif score >= 80:
+        # أكمل هنا
+        pass
+
+# اختبر الدالة
+print(get_grade(95))
+print(get_grade(75))
+print(get_grade(55))`,
+      validate: function(code, output) {
+        if(!code.includes('def get_grade')) return {ok:false, msg:'⚠️ اكتب الدالة باسم get_grade'};
+        if(!code.includes('return')) return {ok:false, msg:'⚠️ الدالة يجب أن تُرجع قيمة باستخدام return'};
+        if(!code.includes('elif')) return {ok:false, msg:'⚠️ استخدم elif للتحقق من الحالات المتعددة'};
+        return {ok:true};
+      }
+    }
+  },
+
+  // ============================================================
+  // الدرس ٦: الكلاسات والوراثة
+  // ============================================================
+  {
+    id:'classes',
+    icon:'🏛️',
+    color:'linear-gradient(135deg,#1f1e3f,#0f0f20)',
+    num:6, name:'الكلاسات والوراثة', nameEn:'Classes & Inheritance',
+    weeks:'أسبوع ٥ و ٧',
+    desc:'البرمجة الكائنية: تعلم كيف تصمم برامجك ككيانات حقيقية.',
+    theory:`
+      <div class="steps">
+        <div class="step"><div class="step-n">١</div><div class="step-t">
+          <strong>الكلاس (Class)</strong>: قالب أو مخطط لإنشاء كائنات. مثل: الكلاس "سيارة" → كائن "مرسيدس بيضاء".
+        </div></div>
+        <div class="step"><div class="step-n">٢</div><div class="step-t">
+          <code>__init__</code>: المُشيِّد (Constructor) يُستدعى تلقائياً عند إنشاء كائن جديد. يُهيئ الخصائص.
+        </div></div>
+        <div class="step"><div class="step-n">٣</div><div class="step-t">
+          <code>self</code>: مرجع للكائن الحالي. يجب وضعه أول معامل في كل دالة داخل الكلاس.
+        </div></div>
+        <div class="step"><div class="step-n">٤</div><div class="step-t">
+          <strong>الوراثة (Inheritance)</strong>: كلاس ابن يرث جميع دوال وخصائص الكلاس الأب. يُجنبنا تكرار الكود.
+        </div></div>
+        <div class="step"><div class="step-n">٥</div><div class="step-t">
+          الكلاس الابن يمكنه <strong>إضافة دوال جديدة</strong> أو <strong>تعديل (Override)</strong> دوال الأب.
+        </div></div>
+      </div>
+      <div class="tip tip-warn"><div class="tip-title">🧠 OOP مبدأ أساسي</div>
+      الفرق: <strong>الكلاس</strong> = الوصفة | <strong>الكائن (Object/Instance)</strong> = الطبق المطبوخ فعلاً. يمكنك إنشاء آلاف الكائنات من كلاس واحد.</div>
+    `,
+    labExamples:[
+      {file:'classes.py', code:`<span class="k">class</span> <span class="cls">Point</span>:
+    <span class="k">def</span> <span class="f">__init__</span>(<span class="v">self</span>, <span class="v">x</span>, <span class="v">y</span>):
+        <span class="v">self</span>.<span class="v">x</span> <span class="op">=</span> <span class="v">x</span>  <span class="c"># خاصية x</span>
+        <span class="v">self</span>.<span class="v">y</span> <span class="op">=</span> <span class="v">y</span>  <span class="c"># خاصية y</span>
+
+    <span class="k">def</span> <span class="f">move</span>(<span class="v">self</span>):
+        <span class="f">print</span>(<span class="s">"move"</span>)
+
+    <span class="k">def</span> <span class="f">draw</span>(<span class="v">self</span>):
+        <span class="f">print</span>(<span class="s">f"Point({self.x}, {self.y})"</span>)
+
+<span class="c"># إنشاء كائنات</span>
+<span class="v">p1</span> <span class="op">=</span> <span class="cls">Point</span>(<span class="n">10</span>, <span class="n">5</span>)
+<span class="v">p2</span> <span class="op">=</span> <span class="cls">Point</span>(<span class="n">2</span>, <span class="n">4</span>)
+<span class="v">p1</span>.<span class="f">draw</span>()  <span class="c"># Point(10, 5)</span>`},
+      {file:'inheritance.py', code:`<span class="k">class</span> <span class="cls">Mammal</span>:
+    <span class="k">def</span> <span class="f">walk</span>(<span class="v">self</span>):
+        <span class="f">print</span>(<span class="s">"walk"</span>)
+
+<span class="c"># Dog يرث من Mammal</span>
+<span class="k">class</span> <span class="cls">Dog</span>(<span class="cls">Mammal</span>):
+    <span class="k">def</span> <span class="f">bark</span>(<span class="v">self</span>):
+        <span class="f">print</span>(<span class="s">"Woof!"</span>)
+
+<span class="v">dog</span> <span class="op">=</span> <span class="cls">Dog</span>()
+<span class="v">dog</span>.<span class="f">walk</span>()  <span class="c"># موروثة من Mammal</span>
+<span class="v">dog</span>.<span class="f">bark</span>()  <span class="c"># خاصة بـ Dog</span>`}
+    ],
+    extraExamples:[
+      {file:'oop_example.py', title:'مثال OOP كامل', code:`<span class="k">class</span> <span class="cls">BankAccount</span>:
+    <span class="k">def</span> <span class="f">__init__</span>(<span class="v">self</span>, <span class="v">owner</span>, <span class="v">balance</span><span class="op">=</span><span class="n">0</span>):
+        <span class="v">self</span>.<span class="v">owner</span>   <span class="op">=</span> <span class="v">owner</span>
+        <span class="v">self</span>.<span class="v">balance</span> <span class="op">=</span> <span class="v">balance</span>
+
+    <span class="k">def</span> <span class="f">deposit</span>(<span class="v">self</span>, <span class="v">amount</span>):
+        <span class="v">self</span>.<span class="v">balance</span> <span class="op">+=</span> <span class="v">amount</span>
+        <span class="f">print</span>(<span class="s">f"تم إيداع {amount}. الرصيد: {self.balance}"</span>)
+
+    <span class="k">def</span> <span class="f">withdraw</span>(<span class="v">self</span>, <span class="v">amount</span>):
+        <span class="k">if</span> <span class="v">amount</span> <span class="op">></span> <span class="v">self</span>.<span class="v">balance</span>:
+            <span class="f">print</span>(<span class="s">"رصيد غير كافٍ!"</span>)
+        <span class="k">else</span>:
+            <span class="v">self</span>.<span class="v">balance</span> <span class="op">-=</span> <span class="v">amount</span>
+
+<span class="v">acc</span> <span class="op">=</span> <span class="cls">BankAccount</span>(<span class="s">"أحمد"</span>, <span class="n">1000</span>)
+<span class="v">acc</span>.<span class="f">deposit</span>(<span class="n">500</span>)   <span class="c"># الرصيد: 1500</span>
+<span class="v">acc</span>.<span class="f">withdraw</span>(<span class="n">200</span>)  <span class="c"># الرصيد: 1300</span>`}
+    ],
+    challenge:{
+      title:'🎯 تحدي الكلاسات',
+      desc:'اصنع كلاس يمثل طالباً جامعياً.',
+      task:`<strong>المطلوب:</strong> اكتب كلاس <strong>Student</strong> يحتوي:
+• <strong>__init__</strong>: يستقبل name, age, gpa
+• دالة <strong>introduce()</strong>: تطبع "اسمي X، عمري Y، معدلي Z"
+• دالة <strong>is_passing()</strong>: تُرجع True إذا كان gpa >= 2.0
+ثم أنشئ كائنَيْن واختبر الدوال.`,
+      hint:'class Student:  ثم def __init__(self, name, age, gpa):  ثم self.name = name',
+      placeholder:`class Student:
+    def __init__(self, name, age, gpa):
+        self.name = name
+        # أكمل هنا
+
+    def introduce(self):
+        print(f"اسمي {self.name}...")
+
+    def is_passing(self):
+        # أكمل هنا
+        pass
+
+# اختبر
+s1 = Student("أحمد", 20, 3.5)
+s1.introduce()
+print(s1.is_passing())`,
+      validate: function(code, output) {
+        if(!code.includes('class Student')) return {ok:false, msg:'⚠️ اكتب كلاس باسم Student'};
+        if(!code.includes('__init__')) return {ok:false, msg:'⚠️ أضف المُشيِّد __init__'};
+        if(!code.includes('self.')) return {ok:false, msg:'⚠️ استخدم self.name وself.age وself.gpa لتخزين الخصائص'};
+        if(!code.includes('introduce')) return {ok:false, msg:'⚠️ أضف الدالة introduce()'};
+        return {ok:true};
+      }
+    }
+  },
+
+  // ============================================================
+  // الدرس ٧: الاستثناءات والموديولات
+  // ============================================================
+  {
+    id:'exceptions',
+    icon:'🛡️',
+    color:'linear-gradient(135deg,#3d2010,#201008)',
+    num:7, name:'الاستثناءات والموديولات', nameEn:'Exceptions & Modules',
+    weeks:'أسبوع ٦',
+    desc:'تعلم كيف تتعامل مع الأخطاء وتنظم كودك في ملفات منفصلة.',
+    theory:`
+      <div class="sec-title">⚠️ الاستثناءات (Exceptions)</div>
+      <div class="steps">
+        <div class="step"><div class="step-n">١</div><div class="step-t">
+          الاستثناءات هي أخطاء تحدث أثناء التشغيل وتوقف البرنامج إذا لم نتعامل معها.
+        </div></div>
+        <div class="step"><div class="step-n">٢</div><div class="step-t">
+          <code>try</code>: ضع الكود الذي قد يُخطئ | <code>except</code>: ماذا تفعل عند الخطأ | <code>finally</code>: يُنفَّذ دائماً.
+        </div></div>
+        <div class="step"><div class="step-n">٣</div><div class="step-t">
+          أنواع شائعة: <code>ValueError</code> (قيمة خاطئة) — <code>ZeroDivisionError</code> (قسمة على صفر) — <code>TypeError</code> — <code>IndexError</code>
+        </div></div>
+      </div>
+      <br>
+      <div class="sec-title">📦 الموديولات (Modules)</div>
+      <div class="steps">
+        <div class="step"><div class="step-n">١</div><div class="step-t">
+          الموديول: ملف .py يحتوي كوداً يمكن استيراده في ملفات أخرى. يُنظِّم المشاريع الكبيرة.
+        </div></div>
+        <div class="step"><div class="step-n">٢</div><div class="step-t">
+          <code>import random</code> — أو — <code>from random import randint</code>
+        </div></div>
+        <div class="step"><div class="step-n">٣</div><div class="step-t">
+          المكتبة القياسية تشمل: <code>random</code> — <code>math</code> — <code>datetime</code> — <code>os</code> — <code>json</code>
+        </div></div>
+        <div class="step"><div class="step-n">٤</div><div class="step-t">
+          <strong>PyPI</strong>: مستودع الحزم الخارجية. تثبّتها بـ <code>pip install package_name</code>
+        </div></div>
+      </div>
+    `,
+    labExamples:[
+      {file:'exceptions.py', code:`<span class="k">try</span>:
+    <span class="v">age</span> <span class="op">=</span> <span class="f">int</span>(<span class="f">input</span>(<span class="s">'Age: '</span>))
+    <span class="v">income</span> <span class="op">=</span> <span class="n">20000</span>
+    <span class="v">risk</span> <span class="op">=</span> <span class="v">income</span> <span class="op">/</span> <span class="v">age</span>
+    <span class="f">print</span>(<span class="v">age</span>)
+<span class="k">except</span> <span class="cls">ValueError</span>:
+    <span class="f">print</span>(<span class="s">'Not a valid number'</span>)
+<span class="k">except</span> <span class="cls">ZeroDivisionError</span>:
+    <span class="f">print</span>(<span class="s">'Age cannot be 0'</span>)`},
+      {file:'random_module.py', code:`<span class="k">import</span> <span class="v">random</span>
+
+<span class="f">print</span>(<span class="v">random</span>.<span class="f">random</span>())       <span class="c"># float بين 0 و 1</span>
+<span class="f">print</span>(<span class="v">random</span>.<span class="f">randint</span>(<span class="n">1</span>,<span class="n">6</span>))   <span class="c"># رقم عشوائي 1-6</span>
+
+<span class="v">members</span> <span class="op">=</span> [<span class="s">'John'</span>, <span class="s">'Bob'</span>, <span class="s">'Mary'</span>]
+<span class="v">leader</span> <span class="op">=</span> <span class="v">random</span>.<span class="f">choice</span>(<span class="v">members</span>)
+<span class="f">print</span>(<span class="v">leader</span>)  <span class="c"># عنصر عشوائي</span>`}
+    ],
+    extraExamples:[
+      {file:'try_except_adv.py', title:'معالجة الأخطاء المتقدمة', code:`<span class="k">def</span> <span class="f">safe_divide</span>(<span class="v">a</span>, <span class="v">b</span>):
+    <span class="k">try</span>:
+        <span class="v">result</span> <span class="op">=</span> <span class="v">a</span> <span class="op">/</span> <span class="v">b</span>
+        <span class="k">return</span> <span class="v">result</span>
+    <span class="k">except</span> <span class="cls">ZeroDivisionError</span>:
+        <span class="f">print</span>(<span class="s">"خطأ: لا يمكن القسمة على صفر"</span>)
+        <span class="k">return</span> <span class="b">None</span>
+    <span class="k">except</span> <span class="cls">TypeError</span>:
+        <span class="f">print</span>(<span class="s">"خطأ: يجب أن تكون الأرقام صحيحة"</span>)
+        <span class="k">return</span> <span class="b">None</span>
+    <span class="k">finally</span>:
+        <span class="f">print</span>(<span class="s">"انتهت العملية"</span>)  <span class="c"># يُنفَّذ دائماً</span>
+
+<span class="f">print</span>(<span class="f">safe_divide</span>(<span class="n">10</span>, <span class="n">2</span>))   <span class="c"># 5.0</span>
+<span class="f">print</span>(<span class="f">safe_divide</span>(<span class="n">10</span>, <span class="n">0</span>))   <span class="c"># خطأ</span>`}
+    ],
+    challenge:{
+      title:'🎯 تحدي معالجة الأخطاء',
+      desc:'اكتب دالة آمنة تتحقق من صحة المدخلات.',
+      task:`<strong>المطلوب:</strong> اكتب دالة <strong>safe_square_root(n)</strong> تحسب الجذر التربيعي بأمان:
+• إذا كانت n سالبة → اطبع خطأ مناسب
+• إذا كانت n نصاً → اطبع "يجب إدخال رقم"
+• وإلا → اطبع الجذر التربيعي
+<em>تلميح: الجذر التربيعي هو n ** 0.5</em>`,
+      hint:'استخدم try/except TypeError وتحقق يدوياً من السالب قبل الحساب',
+      placeholder:`def safe_square_root(n):
+    try:
+        if n < 0:
+            print("خطأ: لا جذر للأعداد السالبة")
+            return None
+        result = n ** 0.5
+        print(f"الجذر التربيعي لـ {n} هو {result}")
+        return result
+    except TypeError:
+        # أكمل هنا
+        pass
+
+safe_square_root(25)
+safe_square_root(-4)
+safe_square_root("abc")`,
+      validate: function(code, output) {
+        if(!code.includes('def safe_square_root')) return {ok:false, msg:'⚠️ اكتب الدالة باسم safe_square_root'};
+        if(!code.includes('try')) return {ok:false, msg:'⚠️ استخدم try/except لمعالجة الأخطاء'};
+        if(!code.includes('except')) return {ok:false, msg:'⚠️ أضف except لالتقاط الخطأ'};
+        if(!code.includes('** 0.5') && !code.includes('**0.5')) return {ok:false, msg:'⚠️ احسب الجذر بـ n ** 0.5'};
+        return {ok:true};
+      }
+    }
+  }
+];
+
+/* ================================================================
+   بيانات أسئلة الامتحان الشامل
+================================================================ */
+const EXAM_QUESTIONS = [
+  // -- أسئلة MCQ --
+  {type:'mcq', topic:'المتغيرات', q:'ما نوع المتغير في: rating = 4.9', code:'rating = 4.9', opts:['int','float','str','bool'], ans:1},
+  {type:'mcq', topic:'المتغيرات', q:'أيٌّ من التالي اسم متغير صحيح في بايثون؟', code:'', opts:['2name','my name','my_name','my-name'], ans:2},
+  {type:'mcq', topic:'الحلقات', q:'ماذا يطبع هذا الكود؟', code:'for i in range(2,5):\n    print(i)', opts:['2 3 4','2 3 4 5','0 1 2 3 4','1 2 3 4'], ans:0},
+  {type:'mcq', topic:'النصوص', q:'ما ناتج: "Python"[0]', code:'"Python"[0]', opts:['"Python"','P','y','خطأ'], ans:1},
+  {type:'mcq', topic:'النصوص', q:'أيٌّ من التالي يحوّل النص لأحرف كبيرة؟', code:'', opts:['.upper()','capitalize()','big()','toUpper()'], ans:0},
+  {type:'mcq', topic:'القوائم', q:'ما الدالة لإضافة عنصر لنهاية القائمة؟', code:'', opts:['.add()','insert()','append()','push()'], ans:2},
+  {type:'mcq', topic:'القواميس', q:'ما الناتج؟', code:'d = {"x":10}\nprint(d.get("y","N/A"))', opts:['None','خطأ KeyError','N/A','y'], ans:2},
+  {type:'mcq', topic:'الدوال', q:'ما الناتج؟', code:'def f(x=5):\n    return x*2\nprint(f())', opts:['5','10','خطأ','0'], ans:1},
+  {type:'mcq', topic:'الكلاسات', q:'ما المُشيِّد (Constructor) في بايثون؟', code:'', opts:['constructor()','setup()','__init__()','__new__()'], ans:2},
+  {type:'mcq', topic:'الاستثناءات', q:'ماذا يحدث إذا قسمنا على صفر بدون try/except؟', code:'x = 10 / 0', opts:['تُرجع 0','تُرجع None','ZeroDivisionError','ترجع Infinity'], ans:2},
+  // -- تحديات كود --
+  {type:'code', topic:'الدوال', q:'اكتب دالة تضرب رقمين وتُرجع الناتج', placeholder:'def multiply(a, b):\n    # اكتب هنا\n    pass\n\nprint(multiply(3, 4))  # يجب أن يطبع 12',
+   hint:'return a * b', validate:function(c){
+    if(!c.includes('def multiply')) return {ok:false, msg:'⚠️ اكتب دالة باسم multiply'};
+    if(!c.includes('return')) return {ok:false, msg:'⚠️ الدالة يجب أن تُرجع قيمة'};
+    return {ok:true};
+  }},
+  {type:'code', topic:'القوائم', q:'أنشئ قائمة بأسماء ٣ مواد دراسية ثم اطبعها مرتبة', placeholder:'# أنشئ القائمة\nsubjects = []\n\n# اطبعها مرتبة\n',
+   hint:'subjects.sort() ثم for s in subjects: print(s)', validate:function(c){
+    if(!c.includes('[') || !c.includes(']')) return {ok:false, msg:'⚠️ أنشئ قائمة باستخدام []'};
+    if(!c.includes('sort') && !c.includes('sorted')) return {ok:false, msg:'⚠️ استخدم .sort() لترتيب القائمة'};
+    return {ok:true};
+  }},
+  {type:'code', topic:'الكلاسات', q:'اكتب كلاس Circle بخاصية radius ودالة area() تحسب المساحة', placeholder:'class Circle:\n    def __init__(self, radius):\n        # اكتب هنا\n        pass\n    \n    def area(self):\n        # المساحة = 3.14 * r * r\n        pass\n\nc = Circle(5)\nprint(c.area())  # 78.5',
+   hint:'self.radius = radius  ثم  return 3.14 * self.radius * self.radius', validate:function(c){
+    if(!c.includes('class Circle')) return {ok:false, msg:'⚠️ اكتب كلاس باسم Circle'};
+    if(!c.includes('self.radius')) return {ok:false, msg:'⚠️ خزّن النصف قطر بـ self.radius'};
+    if(!c.includes('def area')) return {ok:false, msg:'⚠️ أضف دالة area()'};
+    return {ok:true};
+  }}
+];
+
+/* ================================================================
+   بيانات الملخص السريع
+================================================================ */
+const SUMMARY_DATA = [
+  {title:'المتغيرات وأنواع البيانات', icon:'🔢', rows:[
+    ['عدد صحيح', 'x = 10'],['عدد عشري', 'x = 3.14'],['نص', 'x = "hello"'],
+    ['منطقي', 'x = True / False'],['نوع المتغير', 'type(x)'],['تحويل نوع', 'int(x) / str(x) / float(x)']
+  ]},
+  {title:'الجمل الشرطية', icon:'🔀', rows:[
+    ['if بسيطة', 'if x > 0: ...'],['if-elif-else', 'elif x == 0: ...'],
+    ['and', 'if a and b: ...'],['or', 'if a or b: ...'],['not', 'if not a: ...'],
+    ['المقارنة', '== != > < >= <=']
+  ]},
+  {title:'الحلقات', icon:'🔁', rows:[
+    ['while','while x < 10: x += 1'],['for + range','for i in range(5): ...'],
+    ['range(a,b,step)','range(1,10,2) → 1,3,5,7,9'],['break','الخروج من الحلقة'],
+    ['continue','تخطي التكرار الحالي'],['for + list','for item in myList: ...']
+  ]},
+  {title:'النصوص (Strings)', icon:'💬', rows:[
+    ['حرف معين','s[0] / s[-1]'],['قطع','s[1:4]'],
+    ['f-string','f"Hi {name}"'],['أحرف كبيرة','.upper()'],
+    ['بحث','.find("x")'],['استبدال','.replace("a","b")'],
+    ['تقسيم','.split()'],['طول','len(s)']
+  ]},
+  {title:'القوائم (Lists)', icon:'📋', rows:[
+    ['إنشاء','lst = [1, 2, 3]'],['إضافة نهاية','.append(x)'],
+    ['إدراج','.insert(i, x)'],['حذف','.remove(x)'],
+    ['ترتيب','.sort()'],['طول','len(lst)'],
+    ['عكس','.reverse()'],['وصول','lst[0] / lst[-1]']
+  ]},
+  {title:'القواميس (Dictionaries)', icon:'🗂️', rows:[
+    ['إنشاء','d = {"key": val}'],['وصول آمن','d.get("k", default)'],
+    ['تحديث','d["key"] = newVal'],['حذف','del d["key"]'],
+    ['المفاتيح','d.keys()'],['القيم','d.values()']
+  ]},
+  {title:'الدوال (Functions)', icon:'⚙️', rows:[
+    ['تعريف','def func(x): ...'],['إرجاع','return value'],
+    ['قيمة افتراضية','def f(x=5): ...'],['حجج مسماة','f(x=10, y=20)'],
+    ['بدون إرجاع','تُرجع None تلقائياً'],['استدعاء','result = func(5)']
+  ]},
+  {title:'الكلاسات (Classes)', icon:'🏛️', rows:[
+    ['تعريف كلاس','class MyClass: ...'],['المُشيِّد','def __init__(self, x): ...'],
+    ['الخصائص','self.x = x'],['الدوال','def method(self): ...'],
+    ['إنشاء كائن','obj = MyClass(10)'],['الوراثة','class Dog(Mammal): ...']
+  ]},
+  {title:'الاستثناءات', icon:'🛡️', rows:[
+    ['try/except','try: ... except Error: ...'],['قيمة خاطئة','ValueError'],
+    ['قسمة صفر','ZeroDivisionError'],['نوع خاطئ','TypeError'],
+    ['فهرس خاطئ','IndexError'],['finally','ينفذ دائماً']
+  ]}
+];
+
+/* ================================================================
+   متغيرات الحالة (State)
+================================================================ */
+let completedLessons = JSON.parse(localStorage.getItem('pyCompleted') || '[]');
+let totalScore = parseInt(localStorage.getItem('pyScore') || '0');
+let examStarted = false;
+let examAnswers = {};
+let currentExamQ = 0;
+
+/* ================================================================
+   دوال عرض الصفحات
+================================================================ */
+function showPage(name, btn) {
+  // إخفاء جميع الصفحات
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  // إظهار الصفحة المطلوبة
+  document.getElementById('page-' + name).classList.add('active');
+  // تحديث الزر النشط
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+
+  // تحديث محتوى الصفحات عند الانتقال إليها
+  if(name === 'home') renderHome();
+  if(name === 'lessons') renderLessonsList();
+  if(name === 'summary') renderSummary();
+  if(name === 'exam' && !examStarted) renderExam();
+}
+
+/* ================================================================
+   الصفحة الرئيسية
+================================================================ */
+function renderHome() {
+  // تحديث الإحصائيات
+  document.getElementById('completedCount').textContent = completedLessons.length;
+  document.getElementById('homeScore').textContent = totalScore;
+  document.getElementById('totalScore').textContent = totalScore;
+
+  // تحديث الحلقة الدائرية للتقدم
+  const pct = Math.round((completedLessons.length / LESSONS.length) * 100);
+  document.getElementById('ringPct').textContent = pct + '%';
+  // 251 هو محيط الدائرة (2πr حيث r=40)
+  const offset = 251 - (251 * pct / 100);
+  document.getElementById('ringFill').style.strokeDashoffset = offset;
+
+  // بناء قائمة الدروس السريعة
+  const container = document.getElementById('homeLessonList');
+  container.innerHTML = LESSONS.map(l => lessonCardHTML(l)).join('');
+}
+
+/* ================================================================
+   قائمة الدروس
+================================================================ */
+function renderLessonsList() {
+  const container = document.getElementById('allLessonsList');
+  container.innerHTML = LESSONS.map(l => lessonCardHTML(l)).join('');
+}
+
+function lessonCardHTML(l) {
+  const done = completedLessons.includes(l.id);
+  return `<div class="lesson-card ${done?'completed':''}" onclick="openLesson('${l.id}')">
+    <div class="lesson-icon-wrap" style="background:${l.color}">${l.icon}</div>
+    <div class="lesson-info">
+      <div class="lesson-num">${l.weeks} • الدرس ${l.num}</div>
+      <div class="lesson-name">${l.name}</div>
+      <div class="lesson-name-en">${l.nameEn}</div>
+    </div>
+    <div class="lesson-badge ${done?'done':''}">${done?'✓ مكتمل':'ابدأ →'}</div>
+  </div>`;
+}
+
+/* ================================================================
+   فتح درس
+================================================================ */
+function openLesson(id) {
+  const lesson = LESSONS.find(l => l.id === id);
+  if(!lesson) return;
+
+  // إظهار صفحة الدروس إن لم تكن ظاهرة
+  showPage('lessons', document.querySelectorAll('.nav-item')[1]);
+
+  document.getElementById('lessonsListView').style.display = 'none';
+  document.getElementById('lessonDetailView').style.display = 'block';
+
+  document.getElementById('lessonContent').innerHTML = buildLessonHTML(lesson);
+  window.scrollTo(0, 0);
+}
+
+function backToList() {
+  document.getElementById('lessonsListView').style.display = 'block';
+  document.getElementById('lessonDetailView').style.display = 'none';
+  renderLessonsList();
+}
+
+/* ================================================================
+   بناء HTML الدرس
+================================================================ */
+function buildLessonHTML(l) {
+  const tabId = 'lesson_' + l.id;
+  return `
+    <div class="lesson-hero">
+      <div class="lesson-hero-icon">${l.icon}</div>
+      <div class="lesson-hero-badge">الدرس ${l.num} — ${l.weeks}</div>
+      <h2>${l.name} <em>(${l.nameEn})</em></h2>
+      <p>${l.desc}</p>
+    </div>
+
+    <!-- تبويبات الدرس -->
+    <div class="lesson-tabs">
+      <button class="tab-btn active" onclick="switchTab('${tabId}','theory',this)">📖 الشرح</button>
+      <button class="tab-btn" onclick="switchTab('${tabId}','lab',this)">🧪 أمثلة الملزمة</button>
+      <button class="tab-btn" onclick="switchTab('${tabId}','extra',this)">🚀 أمثلة إضافية</button>
+      <button class="tab-btn" onclick="switchTab('${tabId}','challenge',this)">🎯 التحدي</button>
+    </div>
+
+    <!-- تبويب الشرح -->
+    <div class="tab-content active" id="${tabId}_theory">
+      <div class="info-card">${l.theory}</div>
+    </div>
+
+    <!-- تبويب أمثلة الملزمة -->
+    <div class="tab-content" id="${tabId}_lab">
+      <div class="tip tip-info"><div class="tip-title">🧪 أمثلة من الملزمة</div>هذه الأمثلة مأخوذة مباشرة من ملزمة المادة العملية.</div>
+      ${l.labExamples.map((ex,i) => buildCodeBox(ex, `${tabId}_lab_${i}`)).join('')}
+    </div>
+
+    <!-- تبويب الأمثلة الإضافية -->
+    <div class="tab-content" id="${tabId}_extra">
+      <div class="tip tip-success"><div class="tip-title">🚀 أمثلة إضافية</div>أمثلة أوسع لتعميق فهمك وتوسيع مداركك.</div>
+      ${l.extraExamples.map((ex,i) => `
+        <div class="sec-title">${ex.title}</div>
+        ${buildCodeBox(ex, `${tabId}_extra_${i}`)}
+      `).join('')}
+    </div>
+
+    <!-- تبويب التحدي -->
+    <div class="tab-content" id="${tabId}_challenge">
+      ${buildChallenge(l, tabId)}
+    </div>
+  `;
+}
+
+/* صندوق الكود */
+function buildCodeBox(ex, id) {
+  return `<div class="code-box">
+    <div class="code-top">
+      <div class="code-dots"><span class="cd1"></span><span class="cd2"></span><span class="cd3"></span></div>
+      <div class="code-file">${ex.file || 'example.py'}</div>
+      <button class="copy-btn" onclick="copyCode('${id}',this)">📋 نسخ</button>
+    </div>
+    <div class="code-body"><pre id="${id}">${ex.code}</pre></div>
+  </div>`;
+}
+
+/* بناء قسم التحدي */
+function buildChallenge(l, tabId) {
+  const ch = l.challenge;
+  const cid = tabId + '_ch';
+  return `<div class="challenge-box">
+    <div class="challenge-title">${ch.title}</div>
+    <div class="challenge-desc">${ch.desc}</div>
+    <div class="challenge-task">${ch.task}</div>
+
+    <div class="code-editor">
+      <div class="editor-top">
+        <div class="editor-label">✏️ اكتب كودك هنا</div>
+        <div class="editor-hint">Python 3</div>
+      </div>
+      <textarea class="code-input" id="${cid}_input" spellcheck="false">${ch.placeholder}</textarea>
+    </div>
+
+    <div class="hint-box" id="${cid}_hint">💡 ${ch.hint}</div>
+    <div class="output-area" id="${cid}_out"></div>
+
+    <div class="btn-row">
+      <button class="btn btn-run" onclick="runChallenge('${l.id}','${cid}')">▶ تشغيل واختبار</button>
+      <button class="btn btn-hint" onclick="toggleHint('${cid}_hint')">💡 تلميح</button>
+      <button class="btn btn-reset" onclick="resetCode('${cid}_input','${l.id}')">↺ إعادة</button>
+    </div>
+  </div>`;
+}
+
+/* ================================================================
+   تبديل التبويبات
+================================================================ */
+function switchTab(prefix, tab, btn) {
+  // إخفاء جميع التبويبات
+  document.querySelectorAll(`[id^="${prefix}_"]`).forEach(el => {
+    if(el.classList.contains('tab-content')) el.classList.remove('active');
+  });
+  document.getElementById(`${prefix}_${tab}`).classList.add('active');
+  // تحديث الأزرار
+  btn.closest('.lesson-tabs').querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+/* ================================================================
+   نسخ الكود
+================================================================ */
+function copyCode(id, btn) {
+  const el = document.getElementById(id);
+  if(!el) return;
+  navigator.clipboard.writeText(el.innerText).then(() => {
+    btn.textContent = '✓ تم';
+    setTimeout(() => btn.textContent = '📋 نسخ', 2000);
+  });
+}
+
+/* ================================================================
+   تشغيل التحدي وتحليله
+================================================================ */
+function runChallenge(lessonId, cid) {
+  const code = document.getElementById(cid + '_input').value.trim();
+  const outEl = document.getElementById(cid + '_out');
+  const lesson = LESSONS.find(l => l.id === lessonId);
+
+  if(!code) {
+    showOutput(outEl, '⚠️ الرجاء كتابة الكود أولاً', 'error');
+    return;
+  }
+
+  // تشغيل دالة التحقق الخاصة بالتحدي
+  const check = lesson.challenge.validate(code, '');
+  if(!check.ok) {
+    showOutput(outEl, check.msg, 'error');
+    return;
+  }
+
+  // محاكاة تنفيذ الكود
+  const output = simulatePython(code);
+  showOutput(outEl, output.text, output.type);
+
+  // إذا نجح، سجّل الإنجاز
+  if(output.type === 'success' && !completedLessons.includes(lessonId)) {
+    completedLessons.push(lessonId);
+    totalScore += 10;
+    localStorage.setItem('pyCompleted', JSON.stringify(completedLessons));
+    localStorage.setItem('pyScore', totalScore);
+    document.getElementById('totalScore').textContent = totalScore;
+    showOutput(outEl, output.text + '\n\n🏆 أحسنت! حصلت على 10 نقاط!', 'success');
+  }
+}
+
+/* دالة إظهار الناتج */
+function showOutput(el, text, type) {
+  el.className = 'output-area ' + type;
+  el.textContent = text;
+}
+
+/* محاكاة تنفيذ بايثون (بسيطة ومركّزة) */
+function simulatePython(code) {
+  const lines = code.split('\n');
+  const outputs = [];
+  const vars = {};
+  let error = null;
+
+  // معالجة سطر سطر
+  for(let line of lines) {
+    line = line.trim();
+    if(!line || line.startsWith('#')) continue;
+
+    try {
+      // print()
+      if(line.startsWith('print(')) {
+        const inner = line.slice(6, -1);
+        outputs.push(evalPrint(inner, vars));
+        continue;
+      }
+      // تعريف متغير بسيط: x = value
+      const assignMatch = line.match(/^([a-zA-Z_]\w*)\s*=\s*(.+)$/);
+      if(assignMatch && !line.includes('def ') && !line.includes('class ')) {
+        const varName = assignMatch[1];
+        const rawVal = assignMatch[2].trim();
+        vars[varName] = parseValue(rawVal, vars);
+      }
+    } catch(e) {
+      error = e.message;
+    }
+  }
+
+  if(error) return {text: '❌ خطأ في التنفيذ:\n' + error, type:'error'};
+  if(outputs.length === 0) return {text:'✅ تم تنفيذ الكود بنجاح!\n(لم يكن هناك print للإخراج)', type:'success'};
+  return {text: '✅ ناتج التنفيذ:\n\n' + outputs.join('\n'), type:'success'};
+}
+
+function parseValue(raw, vars) {
+  raw = raw.trim();
+  if(raw === 'True') return true;
+  if(raw === 'False') return false;
+  if(raw === 'None') return null;
+  if((raw.startsWith('"') && raw.endsWith('"')) || (raw.startsWith("'") && raw.endsWith("'")))
+    return raw.slice(1,-1);
+  if(!isNaN(raw)) return Number(raw);
+  if(vars[raw] !== undefined) return vars[raw];
+  return raw;
+}
+
+function evalPrint(inner, vars) {
+  inner = inner.trim();
+  // f-string
+  if(inner.match(/^[fF]["']/)) {
+    let s = inner.slice(2,-1);
+    s = s.replace(/\{([^}]+)\}/g, (_,k) => vars[k.trim()] !== undefined ? vars[k.trim()] : k);
+    return s;
+  }
+  // نص عادي
+  if((inner.startsWith('"') && inner.endsWith('"')) || (inner.startsWith("'") && inner.endsWith("'")))
+    return inner.slice(1,-1);
+  // متغير
+  if(vars[inner] !== undefined) return String(vars[inner]);
+  // تعبير type()
+  if(inner.startsWith('type(')) {
+    const varName = inner.slice(5,-1).trim();
+    const val = vars[varName];
+    if(val === undefined) return `<class 'undefined'>`;
+    const t = typeof val === 'boolean' ? 'bool' : typeof val === 'number' ? (Number.isInteger(val)?'int':'float') : 'str';
+    return `<class '${t}'>`;
+  }
+  return inner;
+}
+
+/* ================================================================
+   إعادة تعيين الكود
+================================================================ */
+function resetCode(inputId, lessonId) {
+  const lesson = LESSONS.find(l => l.id === lessonId);
+  if(lesson) document.getElementById(inputId).value = lesson.challenge.placeholder;
+}
+
+function toggleHint(id) {
+  const el = document.getElementById(id);
+  el.style.display = el.style.display === 'block' ? 'none' : 'block';
+}
+
+/* ================================================================
+   الامتحان الشامل
+================================================================ */
+function renderExam() {
+  examStarted = true;
+  examAnswers = {};
+
+  let html = `
+    <div class="exam-hero">
+      <div class="exam-hero-icon">📝</div>
+      <h2>الامتحان الشامل</h2>
+      <p>يشمل جميع مواضيع المادة — أسئلة اختيار من متعدد وتحديات برمجية.<br>
+      اجتهد وأحسن التوفيق! 💪</p>
+      <div style="margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+        <span class="badge-pill pill-blue">📊 ${EXAM_QUESTIONS.filter(q=>q.type==='mcq').length} سؤال MCQ</span>
+        <span class="badge-pill pill-purple">💻 ${EXAM_QUESTIONS.filter(q=>q.type==='code').length} تحدي برمجي</span>
+      </div>
+    </div>
+  `;
+
+  // بناء أسئلة MCQ
+  const mcqs = EXAM_QUESTIONS.filter(q => q.type === 'mcq');
+  html += `<div style="font-size:14px;font-weight:800;color:var(--accent2);margin:0 0 12px">📊 أسئلة اختيار من متعدد</div>`;
+  mcqs.forEach((q, idx) => {
+    const letters = ['أ','ب','ج','د'];
+    html += `<div class="exam-q" id="examq_mcq_${idx}">
+      <div class="exam-q-num">سؤال ${idx+1} — ${q.topic}</div>
+      <div class="exam-q-text">${q.q}</div>
+      ${q.code ? `<code class="exam-q-code">${q.code.replace(/\n/g,'<br>')}</code>` : ''}
+      <div class="exam-opts">
+        ${q.opts.map((o,oi) => `
+          <div class="exam-opt" id="examopt_mcq_${idx}_${oi}" onclick="selectMCQ(${idx},${oi})">
+            <div class="opt-letter">${letters[oi]}</div>
+            <span>${o}</span>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  });
+
+  // بناء تحديات الكود
+  const codes = EXAM_QUESTIONS.filter(q => q.type === 'code');
+  html += `<div style="font-size:14px;font-weight:800;color:var(--accent2);margin:20px 0 12px">💻 تحديات برمجية</div>`;
+  codes.forEach((q, idx) => {
+    const cid = `examcode_${idx}`;
+    html += `<div class="exam-q">
+      <div class="exam-q-num">تحدي ${idx+1} — ${q.topic}</div>
+      <div class="exam-q-text">${q.q}</div>
+      <div class="code-editor" style="margin-top:10px">
+        <div class="editor-top">
+          <div class="editor-label">✏️ اكتب كودك</div>
+        </div>
+        <textarea class="code-input" id="${cid}_input" spellcheck="false">${q.placeholder}</textarea>
+      </div>
+      <div class="hint-box" id="${cid}_hint">💡 ${q.hint}</div>
+      <div class="output-area" id="${cid}_out"></div>
+      <div class="btn-row" style="margin-top:8px">
+        <button class="btn btn-run" onclick="runExamCode(${idx},'${cid}')">▶ تشغيل</button>
+        <button class="btn btn-hint" onclick="toggleHint('${cid}_hint')">💡 تلميح</button>
+      </div>
+    </div>`;
+  });
+
+  // زر التسليم والنتيجة
+  html += `
+    <button class="btn btn-run" style="width:100%;margin-top:16px;font-size:16px;padding:14px"
+      onclick="submitExam()">🎓 تسليم الامتحان والحصول على النتيجة</button>
+    <div class="exam-result" id="examResult"></div>
+  `;
+
+  document.getElementById('examContent').innerHTML = html;
+}
+
+/* اختيار إجابة MCQ */
+function selectMCQ(qIdx, optIdx) {
+  // إزالة التحديد السابق
+  document.querySelectorAll(`[id^="examopt_mcq_${qIdx}_"]`).forEach(el => el.classList.remove('selected'));
+  document.getElementById(`examopt_mcq_${qIdx}_${optIdx}`).classList.add('selected');
+  examAnswers['mcq_' + qIdx] = optIdx;
+}
+
+/* تشغيل كود الامتحان */
+function runExamCode(idx, cid) {
+  const codes = EXAM_QUESTIONS.filter(q => q.type === 'code');
+  const q = codes[idx];
+  const code = document.getElementById(cid + '_input').value.trim();
+  const outEl = document.getElementById(cid + '_out');
+
+  const check = q.validate(code);
+  if(!check.ok) {
+    showOutput(outEl, check.msg, 'error');
+    examAnswers['code_' + idx] = false;
+    return;
+  }
+  const result = simulatePython(code);
+  showOutput(outEl, result.text, result.type);
+  examAnswers['code_' + idx] = result.type === 'success';
+}
+
+/* تسليم الامتحان */
+function submitExam() {
+  const mcqs = EXAM_QUESTIONS.filter(q => q.type === 'mcq');
+  const codes = EXAM_QUESTIONS.filter(q => q.type === 'code');
+
+  let correct = 0;
+  const total = mcqs.length + codes.length;
+
+  // تصحيح MCQ
+  mcqs.forEach((q, idx) => {
+    const selected = examAnswers['mcq_' + idx];
+    const opts = document.querySelectorAll(`[id^="examopt_mcq_${idx}_"]`);
+    if(selected !== undefined) {
+      if(selected === q.ans) {
+        correct++;
+        opts[selected].classList.add('correct');
+      } else {
+        opts[selected].classList.add('wrong');
+        opts[q.ans].classList.add('correct');
+      }
+    } else {
+      // لم يجب، أظهر الصحيح
+      opts[q.ans].classList.add('correct');
+    }
+  });
+
+  // تصحيح الكود
+  codes.forEach((_, idx) => {
+    if(examAnswers['code_' + idx] === true) correct++;
+  });
+
+  const pct = Math.round((correct / total) * 100);
+  const emoji = pct >= 90 ? '🏆' : pct >= 70 ? '😊' : pct >= 50 ? '📚' : '💪';
+  const msg = pct >= 90 ? 'ممتاز! أنت جاهز للامتحان!' : pct >= 70 ? 'جيد جداً! راجع الأجزاء الضعيفة.' : pct >= 50 ? 'مقبول. تحتاج مراجعة أكثر.' : 'راجع الدروس مرة أخرى.';
+
+  // إضافة نقاط
+  const examScore = Math.round(pct / 10) * 2;
+  totalScore += examScore;
+  localStorage.setItem('pyScore', totalScore);
+  document.getElementById('totalScore').textContent = totalScore;
+
+  const resultEl = document.getElementById('examResult');
+  resultEl.innerHTML = `
+    <div class="result-emoji">${emoji}</div>
+    <div class="result-score">${correct}/${total}</div>
+    <div class="result-label">${msg}</div>
+    <div class="result-bar"><div class="result-bar-fill" style="width:${pct}%"></div></div>
+    <div style="font-size:13px;color:var(--muted2);margin-bottom:16px">النسبة: ${pct}% | +${examScore} نقطة مضافة</div>
+    <button class="btn btn-run" onclick="location.reload()">🔄 إعادة المحاولة</button>
+  `;
+  resultEl.classList.add('show');
+  resultEl.scrollIntoView({behavior:'smooth'});
+}
+
+/* ================================================================
+   صفحة الملخص
+================================================================ */
+function renderSummary() {
+  let html = '';
+  SUMMARY_DATA.forEach((section, i) => {
+    html += `<div class="cheat-section" id="cs_${i}">
+      <div class="cheat-header" onclick="toggleCheat(${i})">
+        <h3>${section.icon} ${section.title}</h3>
+        <span class="cheat-arrow">▼</span>
+      </div>
+      <div class="cheat-body">
+        <table class="ref-table">
+          <tr><th>المفهوم</th><th>الكود</th></tr>
+          ${section.rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('')}
+        </table>
+      </div>
+    </div>`;
+  });
+  document.getElementById('summaryContent').innerHTML = html;
+}
+
+function toggleCheat(i) {
+  const sec = document.getElementById('cs_' + i);
+  sec.classList.toggle('open');
+}
+
+/* ================================================================
+   التهيئة عند تحميل الصفحة
+================================================================ */
+document.addEventListener('DOMContentLoaded', function() {
+  // إخفاء شاشة التحميل بعد 1.6 ثانية
+  setTimeout(function() {
+    document.getElementById('splash').classList.add('hide');
+    renderHome();
+    renderLessonsList();
+  }, 1600);
+});
+</script>
+
+<!-- ========== التذييل ========== -->
+<style>
+/* تذييل داخل صفحة الرئيسية */
+#page-home .footer-note {
+  text-align:center;padding:16px;font-size:11px;color:var(--muted);
+  border-top:1px solid var(--border);margin-top:20px;line-height:2;
+}
+</style>
+
+<!-- نضيف التذييل داخل الصفحة الرئيسية عبر JS -->
+<script>
+// إضافة التذييل بعد تحميل الصفحة
+window.addEventListener('load', function() {
+  const footer = document.createElement('div');
+  footer.className = 'footer-note';
+  footer.innerHTML = `🐍 Python Lab | الجامعة التكنولوجية — كلية علوم الحاسوب<br>
+  م.د. منار مصعب | الفصل الثاني 2025–2026<br>
+  <strong style="color:var(--accent2)">تم تطويره بواسطة: Mousa Albher</strong>`;
+  document.getElementById('page-home').appendChild(footer);
+});
+</script>
+
+</body>
+</html>
